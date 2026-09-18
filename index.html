@@ -62,6 +62,12 @@ a { color: var(--accent); }
 .chip.green { border-color: var(--green-dim); color: var(--green); }
 .chip.red { border-color: #6b2a2a; color: var(--red); }
 
+.stats-note {
+  padding: 4px 20px 8px; font-size: 11px; color: var(--text-faint);
+  background: var(--bg-panel); border-bottom: 1px solid var(--border);
+}
+.stats-note b { color: var(--text-dim); }
+
 .hero-row {
   display: flex; gap: 12px; flex-wrap: nowrap; overflow-x: auto; padding: 12px 20px;
   background: var(--bg-panel); border-bottom: 1px solid var(--border);
@@ -286,7 +292,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
   <div class="topbar-slogan" title="Identificamos posibles apuestas de valor; no prometemos aciertos ni ganancias.">
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
-    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 10:33</span>
+    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:09</span>
   </div>
   <div class="weekfilter">
     <select id="weekselect"><option value="">📅 Todas las semanas</option></select>
@@ -295,9 +301,11 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="chip"><b id="statPendientes">9</b> pendientes</span>
     <span class="chip green"><b id="statAciertos">137</b> aciertos</span>
     <span class="chip red"><b id="statFallos">80</b> fallos</span>
+    <span class="chip"><b id="statSinApuesta">150</b> sin apuesta</span>
     <span class="chip"><b id="statNoApostar">45</b> no apostar</span>
   </div>
 </div>
+<div class="stats-note"><b>Sin apuesta</b>: se analizó el partido pero no había ventaja real y no se apostó · <b>No apostar</b>: el partido no se analizó por precaución (puede ser por distintas razones — crisis institucional, rotación de plantel, datos insuficientes, entre otras — según el detalle de cada análisis)</div>
 
 <div class="hero-row">
   <div class="hero-tile">
@@ -1055,9 +1063,11 @@ function renderHeroAndStats(records) {
   const aciertos = records.filter(r => r.estado === "ACIERTO").length;
   const fallos = records.filter(r => r.estado === "FALLO").length;
   const noApostar = records.filter(r => r.no_apostar).length;
+  const sinApuesta = records.filter(r => r.estado === "SIN APUESTA").length;
   document.getElementById("statPendientes").textContent = pendientes;
   document.getElementById("statAciertos").textContent = aciertos;
   document.getElementById("statFallos").textContent = fallos;
+  document.getElementById("statSinApuesta").textContent = sinApuesta;
   document.getElementById("statNoApostar").textContent = noApostar;
 
   const evaluados = aciertos + fallos;
