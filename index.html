@@ -302,7 +302,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
   <div class="topbar-slogan" title="Identificamos posibles apuestas de valor; no prometemos aciertos ni ganancias.">
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
-    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:38</span>
+    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:51</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -513,10 +513,27 @@ prob_implicita = 1 / cuota</code></pre>
 <ul><li>Tarjetas: confianza_raw − 10 pts</li><li>Remates Portería: confianza_raw − 5 pts</li><li>Finales de copa (Over 2.5): − 15 pts efectivos</li><li>Finales de copa (Over 1.5): − 10 pts efectivos</li></ul>
 <hr>
 <h2>No Apostar</h2>
-<p><b>Qué es:</b> Marcador en el dict del partido (<code>no_apostar: True</code>) que indica que el modelo no recomienda ninguna apuesta para ese partido. Genera cabecera rojo oscuro en Excel.</p>
+<p><b>Qué es:</b> Marcador en el dict del partido (<code>no_apostar: True</code>) que indica que el modelo no recomienda ninguna apuesta para ese partido. Se decide <b>antes</b> de calcular valor: el partido tiene demasiada incertidumbre estructural como para confiar en cualquier estadística, no importa lo que digan los números. En el reporte HTML genera cabecera roja oscura y el partido no se envía por Telegram.</p>
 <p><b>Condiciones que activan No Apostar:</b></p>
 <ul><li>Campeón viajando con rotación masiva (≥7 no titulares) a campo desesperado por descenso</li><li>Más de 3 condiciones dinámicas activas simultáneamente</li><li>Todos los mercados &lt; 60% de confianza</li><li>Crisis institucional activa en uno de los equipos</li><li>Huelga de jugadores o situación de fuerza mayor</li></ul>
 <p><b>Ejemplo real:</b> Barça (campeón, rotación total) en Alavés (zona descenso). BTTS=Sí tenía racha 9/9 en casa del rival, pero la desesperación local invalidó toda estadística histórica → No Apostar → resultado 0-1.</p>
+<p><b>No confundir con Sin Apuesta</b> (ver abajo): ahí el modelo sí confía en la lectura del partido, pero el mercado ya tenía el resultado bien valorado y no quedaba margen real.</p>
+<hr>
+<h2>Sin Apuesta</h2>
+<p><b>Qué es:</b> Estado de un partido que sí se analizó por completo (IC calculado en todos los mercados) pero en el que ningún mercado superó la prueba de [[Valor (Value Bet)]] frente a la cuota real — el modelo confía en su lectura del partido, simplemente el mercado ya no dejaba ventaja explotable. Es distinto de <b>No Apostar</b>, donde el modelo directamente desconfía del partido antes de llegar a esa comparación.</p>
+<p><b>Por qué existe como categoría propia:</b> en el encabezado del reporte HTML, &quot;Partidos analizados&quot; no se explica solo con pendientes + aciertos + fallos + no apostar — falta este bucket, que en la práctica es el más numeroso (150 de 421 partidos a la fecha en que se agregó el chip). El chip &quot;sin apuesta&quot; y la nota debajo de los KPI existen para que la suma cuadre y cada categoría quede identificable.</p>
+<hr>
+<h2>Efectividad Global</h2>
+<p><b>Qué es:</b> El KPI principal del encabezado del reporte HTML — el % de acierto calculado únicamente sobre las apuestas REALES ya jugadas (excluye pendientes, No Apostar y Sin Apuesta, porque en esos casos no hubo apuesta que evaluar).</p>
+<p><b>Fórmula:</b> <code>Efectividad global = aciertos / (aciertos + fallos) × 100</code></p>
+<p><b>Qué responde:</b> &quot;si se hubiera apostado todo lo que el modelo marcó con valor real, ¿qué tan seguido habría acertado?&quot;. Es el número que valida (o no) el objetivo central del proyecto — que el IC detecte valor real frente a la cuota, no solo predicciones que aciertan por azar.</p>
+<hr>
+<h2>Precisión sin Valor de Apuesta</h2>
+<p><b>Qué es:</b> Tile del encabezado que mide algo distinto y complementario a la Efectividad Global: qué tan bien calibrado está el IC del modelo específicamente en los partidos marcados <b>Sin Apuesta</b> — es decir, ¿el modelo &quot;lee bien&quot; el resultado incluso cuando decide no recomendar nada porque la cuota ya no dejaba margen?</p>
+<p><b>Cómo se calcula:</b> se agrupan todas las predicciones de partidos Sin Apuesta por bucket de confianza declarada (&lt;65%, 65–69%, 70–74%, 75–79%, 80+%) y se compara cada bucket contra el resultado real de mercado (mismo marcador-vs-pick que usa <code>tools/audit_bruto_mercados.py</code>), sin importar de qué mercado venga cada predicción. Se exige un mínimo de 5 casos por bucket para mostrarlo — evita que un bucket con 1–2 partidos gane por puro azar de muestra.</p>
+<p><b>Por qué NO se usa &quot;el mercado con mejor IC por partido&quot;:</b> esa alternativa se probó primero y se descartó por sesgo de selección confirmado — ese mercado resulta ser Doble Chance el 67.8% de las veces y 1.5 Goles el 24.2% (n=149), porque esos dos mercados declaran estructuralmente el IC más alto del proyecto. Usar esa regla habría medido casi exclusivamente esos dos mercados, no una capacidad general de lectura del partido. La calibración por bucket, agnóstica al mercado, evita ese sesgo.</p>
+<p><b>Ejemplo real (18/09/2026):</b> bucket IC 80+% → <b>84.9% de acierto real (n=93)</b>. Aun en partidos donde decidió no apostar, el modelo sigue leyendo bien el resultado cuando declara alta confianza — confirma que el motivo de no apostar fue la cuota del mercado, no una falla de lectura del modelo.</p>
+<p><b>Importante — no es una recomendación de apuesta.</b> Este número no valida que &quot;se debería haber apostado&quot; esos partidos: precisamente porque están en Sin Apuesta, aun acertando el resultado la cuota ofrecida no pagaba lo suficiente para que fuera una apuesta con valor (ver [[Valor (Value Bet)]]).</p>
 <hr>
 <h2>Redundancia (Anti-Redundancy)</h2>
 <p><b>Qué es:</b> Dos mercados son redundantes cuando la ocurrencia de uno implica lógicamente la del otro. Incluir ambos en una combinada no diversifica el riesgo — es apostar al mismo resultado dos veces.</p>
@@ -565,7 +582,7 @@ prob_implicita = 1 / cuota</code></pre>
 <ul><li>Probabilidad implícita de la cuota: 100 / 1.85 = 54.1%</li><li>Umbral con margen: 54.1% + 5% = 59.1%</li><li>70% &gt; 59.1% → <b>tiene valor</b> → EV = (1.85 × 0.70) − 1 = +29.5%</li></ul>
 <p><b>Regla:</b> Una apuesta puede estar por encima del umbral de confianza (65%) y aun así tener EV negativo si la cuota es muy baja. Verificar siempre ambos.</p>
 <hr>
-<p class="glos-note"><i>Última actualización: 04/09/2026 — Agregar nuevos términos a medida que surjan en los análisis.</i></p></div>
+<p class="glos-note"><i>Última actualización: 18/09/2026 — Agregar nuevos términos a medida que surjan en los análisis.</i></p></div>
 </main>
 
 <footer>Betting Analyzer &middot; reporte generado localmente a partir de generate_analysis.py y archive/generate_analysis_2026_H1.py</footer>
