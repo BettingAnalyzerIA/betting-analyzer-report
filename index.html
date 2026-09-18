@@ -304,7 +304,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:59</span>
+    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 14:00</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -382,23 +382,33 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
 <p><b>Regla práctica:</b> No es suficiente con que algo sea probable — tiene que ser <i>más probable de lo que la cuota implica</i>.</p>
 <hr>
 <h2>IC — Índice de Confianza (Confidence Index)</h2>
-<p><b>Qué es:</b> Número derivado de estadísticas que se usa como entrada para estimar la confianza del modelo en cada mercado. No es directamente la confianza final — el modelo calibra sobre este número.</p>
-<p><b>Fórmulas por mercado:</b></p>
+<p><b>Qué es:</b> El corazón del modelo — la probabilidad que el LLM asigna a cada predicción de cada mercado. Es donde está el verdadero valor agregado del proyecto frente a un simple promedio estadístico: el IC final no sale de una sola fórmula, sino de una cadena de 4 capas que combina estadística cruda, criterio contextual (lo que haría un analista humano, pero de forma sistemática y repetible en decenas de partidos por semana) y ajustes validados con evidencia histórica real del propio proyecto.</p>
+<p><b>Capa 1 — Punto de partida (varía según el mercado, no siempre es un promedio):</b></p>
 <div style="overflow-x:auto"><table class="glos-table"><thead><tr>
-<th>Mercado</th><th>Fórmula IC</th>
+<th>Mercado</th><th>Tipo de cálculo</th><th>Detalle</th>
 </tr></thead><tbody>
-<tr><td>Corners</td><td>(promedio_corners_local_en_casa + promedio_corners_visitante_fuera) / 2</td></tr>
-<tr><td>Tarjetas</td><td>(promedio_tarjetas_total_local_en_casa + promedio_tarjetas_total_visitante_fuera) / 2</td></tr>
-<tr><td>Remates Portería</td><td>SOT_local_en_casa + SOT_visitante_fuera (SUMA, no promedio)</td></tr>
+<tr><td>Corners</td><td>Promedio</td><td>(promedio_corners_local_en_casa + promedio_corners_visitante_fuera) / 2</td></tr>
+<tr><td>Tarjetas</td><td>Promedio</td><td>(promedio_tarjetas_total_local_en_casa + promedio_tarjetas_total_visitante_fuera) / 2</td></tr>
+<tr><td>Remates Portería</td><td>Suma</td><td>SOT_local_en_casa + SOT_visitante_fuera (no promedio)</td></tr>
+<tr><td>1.5 / 2.5 Goles</td><td>Suma vs. umbral fijo</td><td>Suma de goles a favor de ambos equipos en sus últimos 10 partidos en su rol, comparada contra un umbral fijo (Over 2.5 necesita suma ≥18, Over 1.5 ≥14)</td></tr>
+<tr><td>BTTS</td><td>Matriz cualitativa</td><td>Volumen de remates × % de conversión, evaluado por equipo — 9 combinaciones posibles, no una fórmula única (ver sección &quot;BTTS&quot; más abajo)</td></tr>
+<tr><td>1X2</td><td>Señales ponderadas</td><td>Sin fórmula cerrada — se pesan forma reciente, posición en tabla, remates a favor/en contra, patrón de H2H y condiciones dinámicas activas</td></tr>
+<tr><td>Hándicap Asiático</td><td>Derivado de otro IC</td><td>Se calcula sumando o restando puntos al IC ya calculado de 1X2 (lado favorito) o Doble Chance (lado underdog) del mismo partido — nunca se calcula desde cero</td></tr>
 </tbody></table></div>
-<p><b>Ejemplo:</b> Local promedia 5.2 corners en casa, visitante 4.8 corners fuera → IC Corners = (5.2 + 4.8) / 2 = <b>5.0</b> → Under 8.5 según tabla de umbrales.</p>
-<p><b>Tabla de decisión por IC:</b></p>
+<p><b>Capa 2 — Condiciones dinámicas</b> (<code>references/conditions.md</code>, 9 categorías: objetivo asegurado/eliminado, rivalidad histórica, presión diferencial de descenso, lesión de portero/goleador, H2H con patrón consistente, crisis institucional activa, campeón con rotación masiva, rival que solo necesita un empate, ausencias ofensivas múltiples): cada condición activa ajusta el IC crudo en puntos — algunos ajustes llegan a ±15 pts en un solo golpe. Si hay 3 o más condiciones activas al mismo tiempo, el partido tiende a marcarse <b>No Apostar</b> en vez de forzar un número.</p>
+<p><b>Capa 3 — Calibración validada por liga y mercado</b> (<code>references/calibration-rules.md</code>): ajustes que nacen de auditar el acierto real contra la confianza declarada, no de intuición — ej. BTTS se descuenta ~12 pts porque el bucket 70–74% históricamente solo acertó 64.3% real; Tarjetas resta 10 pts base y Remates Portería 5 pts base antes de comparar contra el umbral; Copa Sudamericana exige 75% mínimo (no el 65% estándar) porque ese umbral daba solo 44.4% de efectividad real en esa competición. Toda regla nueva nace <b>PROVISIONAL</b> (se aplica solo el 50% del ajuste) hasta acumular 3 casos que la confirmen — si falla 2 de los siguientes 3, se elimina y se documenta como negativa.</p>
+<p><b>Capa 4 — FLB (sesgo Favorito-Longshot):</b> ver sección &quot;FLB&quot; más abajo — favoritos fuertes (cuota ≤1.30) suman hasta 3 pts efectivos, longshots (cuota &gt;4.00) restan 4–5.</p>
+<p><b>El número que realmente decide es el IC efectivo (crudo + las 4 capas), comparado contra el umbral de valor real de la cuota</b> (ver sección &quot;Valor — Value Bet&quot; más abajo) — nunca contra un umbral genérico único. Esa comparación final es la prueba de fondo: no basta con que el IC sea alto, tiene que superar lo que el mercado ya está pagando por esa probabilidad.</p>
+<p><b>Ejemplo ilustrativo de las 4 capas encadenadas (mecanismo real; el caso de origen de la regla de Capa 2 usada aquí es Villarreal vs. Sevilla, 14/05/2026 1X2 Local — ver <code>calibration-rules.md</code>; los porcentajes de IC crudo/ajustado son ilustrativos, no el registro exacto de aquel partido):</b></p>
+<ol><li>IC crudo (Capa 1, señales ponderadas): local favorito claro por forma y posición en tabla → ~78%</li><li>Condición dinámica activa (Capa 2): local con objetivo ya asegurado (Champions) + visitante a ≤3 pts del descenso → −15 pts → <b>63%</b></li><li>Calibración de liga (Capa 3): sin ajuste adicional aplicable en este caso</li><li>FLB (Capa 4): cuota 1.45 (favorito, no fuerte) → +2 pts → <b>65% efectivo</b></li></ol>
+<p>Sin la Capa 2, el 78% crudo habría quedado como &quot;incluir con confianza&quot;; con el ajuste completo, baja justo a la zona de &quot;incluir con cautela&quot; — la diferencia entre esas dos lecturas es exactamente el tipo de matiz que un promedio estadístico simple no puede capturar por sí solo.</p>
+<p><b>Tabla de decisión — ejemplo Corners (aplicada sobre el IC crudo de Capa 1, antes de calibrar):</b></p>
 <div style="overflow-x:auto"><table class="glos-table"><thead><tr>
 <th>IC Corners</th><th>Predicción</th>
 </tr></thead><tbody>
 <tr><td>≥ 11.0</td><td>Over 10.5</td></tr>
 <tr><td>9.5–10.9</td><td>Over 9.5</td></tr>
-<tr><td>8.0–8.9</td><td>No incluir en combinada</td></tr>
+<tr><td>8.0–8.9</td><td>No incluir en combinada (zona muerta — 1 corner de margen decide el resultado)</td></tr>
 <tr><td>≤ 7.9</td><td>Under 8.5</td></tr>
 </tbody></table></div>
 <hr>
