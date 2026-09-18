@@ -165,7 +165,7 @@ main { padding: 18px 20px 60px; max-width: 1400px; margin: 0 auto; }
   font-size: 15px; font-weight: 600;
 }
 .section-title .count { color: var(--text-faint); font-weight: 400; font-size: 12.5px; }
-.section-title.pdd-title { position: relative; }
+.pdd-header { position: relative; padding-bottom: 4px; }
 .pdd-brand-logo {
   position: absolute; right: 0; top: 50%; transform: translateY(-50%);
   height: 150px; width: auto; display: block; border-radius: 10px;
@@ -293,7 +293,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
   <div class="topbar-slogan" title="Identificamos posibles apuestas de valor; no prometemos aciertos ni ganancias.">
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
-    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:26</span>
+    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:30</span>
   </div>
   <div class="weekfilter">
     <select id="weekselect"><option value="">📅 Todas las semanas</option></select>
@@ -731,12 +731,14 @@ function renderPendientesDia() {
     return ra < rb ? -1 : (ra > rb ? 1 : 0);
   });
   main.innerHTML = `
-    <div class="section-title pdd-title">
-      🎯 Pronósticos del Día <span class="count">${pendientes.length} partido(s) sin jugar, de todas las ligas</span>
+    <div class="pdd-header">
+      <div class="section-title pdd-title">
+        🎯 Pronósticos del Día <span class="count">${pendientes.length} partido(s) sin jugar, de todas las ligas</span>
+      </div>
+      <div class="filters" id="filters-fecha-dia"></div>
+      <div class="filters" id="filters-pendientes-dia"></div>
       ${LOGO_SRC ? `<img class="pdd-brand-logo" src="${LOGO_SRC}" alt="Betting Analyzer">` : ""}
     </div>
-    <div class="filters" id="filters-fecha-dia"></div>
-    <div class="filters" id="filters-pendientes-dia"></div>
     <div class="cards" id="cards-pendientes-dia"></div>
   `;
   const fechaOptions = [["Todas las fechas", ""], ...fechas.map(f => [f, f])];
