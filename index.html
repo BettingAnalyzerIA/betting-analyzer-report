@@ -77,9 +77,10 @@ a { color: var(--accent); }
   padding: 7px 10px; min-width: 0; flex: 1 1 110px;
 }
 .hero-tile .hl {
-  font-size: 9.5px; text-transform: uppercase; letter-spacing: .03em;
-  color: var(--text-faint); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 9px; text-transform: uppercase; letter-spacing: .02em; line-height: 1.25;
+  color: var(--text-faint); margin-bottom: 2px; white-space: normal;
 }
+.hero-tile.hero-tile-wide { flex: 1.4 1 150px; }
 .hero-tile .hv { font-size: 22px; font-weight: 700; line-height: 1.15; color: var(--accent); }
 .hero-tile .hv.hv-good { color: var(--green); }
 .hero-tile .hv.hv-warn { color: var(--yellow); }
@@ -293,7 +294,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
   <div class="topbar-slogan" title="Identificamos posibles apuestas de valor; no prometemos aciertos ni ganancias.">
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
-    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:30</span>
+    <span class="hero-generated" id="statGenerado">Generado 18/09/2026 13:35</span>
   </div>
   <div class="weekfilter">
     <select id="weekselect"><option value="">📅 Todas las semanas</option></select>
@@ -338,7 +339,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <div class="hl">IC que más acierta</div>
     <div class="hv hv-good hv-text" id="hvMejorIC">IC 80+% <span class="hero-sub">84.0% real (n=81)</span></div>
   </div>
-  <div class="hero-tile" title="No es una recomendación de apuesta -- mide que tan bien lee el modelo el partido cuando el mercado ya no dejaba valor real y no se apostó.">
+  <div class="hero-tile hero-tile-wide" title="No es una recomendación de apuesta -- mide que tan bien lee el modelo el partido cuando el mercado ya no dejaba valor real y no se apostó.">
     <div class="hl">Precisión sin valor de apuesta</div>
     <div class="hv hv-warn hv-text" id="hvMejorICSinApuesta">IC 80+% <span class="hero-sub">84.9% real (n=93)</span></div>
     <div class="hero-caveat">No es recomendación de apuesta</div>
