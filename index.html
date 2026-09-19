@@ -28,7 +28,7 @@ a { color: var(--accent); }
   overflow-x: hidden; overflow-y: visible;
 }
 .topbar-brandblock {
-  display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
   padding: 4px 0 2px; position: relative; min-height: 108px;
 }
 .topbar-brand {
@@ -37,8 +37,7 @@ a { color: var(--accent); }
 }
 .topbar-brand .accent { color: var(--accent); }
 .topbar-watermark {
-  position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%);
-  width: 174px; height: 68px; z-index: 0;
+  width: 174px; height: 68px; margin-top: 4px;
   background-repeat: no-repeat; background-position: center; background-size: contain;
   opacity: 0.35; pointer-events: none;
 }
@@ -304,7 +303,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 19/09/2026 13:01</span>
+    <span class="hero-generated" id="statGenerado">Generado 19/09/2026 13:26</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
