@@ -303,7 +303,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 19/09/2026 13:26</span>
+    <span class="hero-generated" id="statGenerado">Generado 19/09/2026 13:29</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -762,6 +762,34 @@ function renderLigasSeleccionadas() {
      ["No apostar", "NO APOSTAR"], ["Sin apuesta (sin valor)", "SIN APUESTA"], ["Otro", "OTRO"]], multi);
 }
 
+// Extrae la hora COL (Colombia) del campo "hora", que viene en formatos
+// heterogeneos ("HH:MM UTC / HH:MM COL", "HH:MM ET / HH:MM COL", a veces
+// solo "HH:MM" sin zona). Si no hay "COL" explicito, usa la primera hora
+// que aparezca en el texto como mejor esfuerzo (partidos sin conversion a
+// COL registrada, minoria de casos legacy).
+function horaColMinutos(horaStr) {
+  if (!horaStr) return null;
+  let m = horaStr.match(/(\d{1,2}):(\d{2})\s*COL/i);
+  if (!m) m = horaStr.match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+const HORA_BUCKETS = [
+  ["🕐 Todos los horarios", null],
+  ["Antes de 10:00 a.m.", "b1"],
+  ["10:00 a.m. a 12:59 p.m.", "b2"],
+  ["1:00 p.m. a 2:59 p.m.", "b3"],
+  ["Desde las 3:00 p.m.", "b4"],
+];
+function horaBucket(horaStr) {
+  const mins = horaColMinutos(horaStr);
+  if (mins === null) return null;
+  if (mins < 600) return "b1";
+  if (mins < 780) return "b2";
+  if (mins < 900) return "b3";
+  return "b4";
+}
+
 function renderPendientesDia() {
   const main = document.getElementById("main");
   const pendientes = fmtDateSort(RECORDS.filter(r => !r.resultado_real || !r.resultado_real.trim()), -1);
@@ -777,28 +805,47 @@ function renderPendientesDia() {
       </div>
       <div class="filters" id="filters-fecha-dia"></div>
       <div class="filters" id="filters-pendientes-dia"></div>
+      <div class="filters" id="filters-hora-dia"></div>
       ${LOGO_SRC ? `<img class="pdd-brand-logo" src="${LOGO_SRC}" alt="Betting Analyzer">` : ""}
     </div>
     <div class="cards" id="cards-pendientes-dia"></div>
   `;
   const fechaOptions = [["Todas las fechas", ""], ...fechas.map(f => [f, f])];
   const fechaEl = document.getElementById("filters-fecha-dia");
+  const estadoEl = document.getElementById("filters-pendientes-dia");
+  const horaEl = document.getElementById("filters-hora-dia");
+  const ESTADO_OPTIONS = [["Todos", null], ["Con apuesta", "apuesta"], ["Sin apuesta", "sinapuesta"], ["No apostar", "NO APOSTAR"]];
+
   fechaEl.innerHTML = fechaOptions.map((o, i) =>
     `<button class="filterchip ${i===0?'active':''}" data-val="${o[1]}">${o[0]}</button>`).join("");
-  function applyDate(val) {
-    const filtered = val ? pendientes.filter(r => r.fecha === val) : pendientes;
-    setupFilterGroup("filters-pendientes-dia", "cards-pendientes-dia", filtered,
-      [["Todos", null], ["Con apuesta", "apuesta"], ["Sin apuesta", "sinapuesta"], ["No apostar", "NO APOSTAR"]],
-      true);
+  estadoEl.innerHTML = ESTADO_OPTIONS.map((o, i) =>
+    `<button class="filterchip ${i===0?'active':''}" data-val="${o[1]||''}">${o[0]}</button>`).join("");
+  horaEl.innerHTML = HORA_BUCKETS.map((o, i) =>
+    `<button class="filterchip ${i===0?'active':''}" data-val="${o[1]||''}">${o[0]}</button>`).join("");
+
+  let curFecha = "", curEstado = null, curHora = null;
+  function applyAll() {
+    let list = curFecha ? pendientes.filter(r => r.fecha === curFecha) : pendientes;
+    if (curEstado === "apuesta") list = list.filter(r => r.combinada && !/^SIN APUESTA/i.test(r.combinada));
+    else if (curEstado === "sinapuesta") list = list.filter(r => !r.combinada || /^SIN APUESTA/i.test(r.combinada));
+    else if (curEstado) list = list.filter(r => r.estado === curEstado);
+    if (curHora) list = list.filter(r => horaBucket(r.hora) === curHora);
+    renderCards("cards-pendientes-dia", list, true);
   }
-  fechaEl.querySelectorAll(".filterchip").forEach(btn => {
-    btn.addEventListener("click", () => {
-      fechaEl.querySelectorAll(".filterchip").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      applyDate(btn.dataset.val);
+  function wireGroup(el, setter) {
+    el.querySelectorAll(".filterchip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        el.querySelectorAll(".filterchip").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        setter(btn.dataset.val || null);
+        applyAll();
+      });
     });
-  });
-  applyDate("");
+  }
+  wireGroup(fechaEl, v => curFecha = v || "");
+  wireGroup(estadoEl, v => curEstado = v);
+  wireGroup(horaEl, v => curHora = v);
+  applyAll();
 }
 
 function renderResumen() {
