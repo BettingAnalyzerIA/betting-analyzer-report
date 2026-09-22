@@ -303,7 +303,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 22/09/2026 07:38</span>
+    <span class="hero-generated" id="statGenerado">Generado 22/09/2026 07:53</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -579,6 +579,7 @@ prob_implicita = 1 / cuota</code></pre>
 <tr><td>Local con delantero principal duda + rival sin objetivos</td><td>1X2 Local</td><td>−10 pts</td></tr>
 <tr><td>Local con objetivo asegurado + visitante a 3 pts del descenso</td><td>1X2 Local</td><td>−15 pts</td></tr>
 </tbody></table></div>
+<p><b>Cómo se distingue una señal real de un espejismo de muestra chica — caso Premier League:</b> al auditar el historial completo por bucket de confianza declarada (65–69%, 70–74%, etc.), Premier League mostró un acierto real muy por debajo de lo esperado en esos dos buckets (50–54%, vs ~67–72% esperado) mientras Bundesliga y Championship —mismo grupo de calibración— calibraban con normalidad. Antes de convertir esto en un ajuste de puntos, el modelo lo puso a prueba contra ~5.000 partidos históricos de las 3 ligas (<code>football-data.co.uk</code>), comparando el rendimiento real del favorito en la misma banda de fuerza de mercado (probabilidad implícita de la cuota de cierre). Resultado: las 3 ligas rinden prácticamente igual en esa banda — no hay nada estructuralmente distinto en Premier League. Conclusión: el hallazgo original es, con alta probabilidad, ruido de una muestra todavía chica (n=28–35 predicciones), no un rasgo real de la liga — se mantiene como zona de vigilancia (sin penalización de puntos) hasta acumular más casos. Este es el mismo principio de gobernanza de la Capa 3 del IC (ver arriba): ninguna regla se activa con puntos completos hasta confirmarse con evidencia, y aquí la evidencia de un dataset histórico grande pesa más que un patrón llamativo en una muestra pequeña.</p>
 <hr>
 <h2>Condición Dinámica</h2>
 <p><b>Qué es:</b> Factor situacional (no estadístico) que altera el comportamiento esperado de un equipo en ese partido específico. Se evalúan antes de generar predicciones.</p>
@@ -593,7 +594,7 @@ prob_implicita = 1 / cuota</code></pre>
 <ul><li>Probabilidad implícita de la cuota: 100 / 1.85 = 54.1%</li><li>Umbral con margen: 54.1% + 5% = 59.1%</li><li>70% &gt; 59.1% → <b>tiene valor</b> → EV = (1.85 × 0.70) − 1 = +29.5%</li></ul>
 <p><b>Regla:</b> Una apuesta puede estar por encima del umbral de confianza (65%) y aun así tener EV negativo si la cuota es muy baja. Verificar siempre ambos.</p>
 <hr>
-<p class="glos-note"><i>Última actualización: 18/09/2026 — Agregar nuevos términos a medida que surjan en los análisis.</i></p></div>
+<p class="glos-note"><i>Última actualización: 22/09/2026 — Agregar nuevos términos a medida que surjan en los análisis.</i></p></div>
 </main>
 
 <footer>🧠 <b>Betting Analyzer IA</b> &mdash; inteligencia artificial aplicada al fútbol con evidencia, no con corazonadas. Reporte generado por un modelo LLM. ¿Cómo funciona? &rarr; <a href="#" onclick="selectTab('glosario'); return false;">📖 Aprende - Conceptos Técnicos del Modelo</a></footer>
