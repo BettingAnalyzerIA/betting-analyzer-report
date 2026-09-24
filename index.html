@@ -129,6 +129,11 @@ a { color: var(--accent); }
   font-size: 12px; font-weight: 700; padding: 7px 10px;
   border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft);
 }
+@media (max-width: 640px) {
+  .tabbar { flex-wrap: wrap; }
+  .tabbtn { flex: 1 1 45%; font-size: 11.5px; padding: 8px 6px; }
+  .tabbtn-primary { flex-basis: 100%; }
+}
 .tabbtn-primary:not(.active) { background: var(--accent-soft); color: var(--text); }
 
 .liga-dropdown {
@@ -389,7 +394,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 08:28</span>
+    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 08:42</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
