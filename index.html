@@ -111,20 +111,22 @@ a { color: var(--accent); }
 
 .tabbar {
   position: sticky; top: 78px; z-index: 29; background: var(--bg);
-  border-bottom: 1px solid var(--border); display: flex; gap: 6px;
-  justify-content: safe center;
-  padding: 10px 20px; overflow-x: auto; white-space: nowrap;
+  border-bottom: 1px solid var(--border); display: flex; gap: 5px; flex-wrap: nowrap;
+  align-items: stretch; justify-content: center;
+  padding: 8px 14px;
 }
 .tabbtn {
   background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim);
-  border-radius: 999px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; flex-shrink: 0;
+  border-radius: 12px; padding: 6px 8px; font-size: 11px; line-height: 1.25; cursor: pointer;
+  flex: 1 1 0; min-width: 0; white-space: normal; text-align: center;
+  display: flex; align-items: center; justify-content: center;
 }
 .tabbtn:hover { background: var(--bg-hover); color: var(--text); }
 .tabbtn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-.tabbtn .n { opacity: .75; font-size: 11px; margin-left: 4px; }
+.tabbtn .n { opacity: .75; font-size: 10px; margin-left: 3px; }
 .tabbtn.has-selection { border-color: var(--accent); color: var(--text); }
 .tabbtn-primary {
-  font-size: 14px; font-weight: 700; padding: 9px 18px;
+  font-size: 12px; font-weight: 700; padding: 7px 10px;
   border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft);
 }
 .tabbtn-primary:not(.active) { background: var(--accent-soft); color: var(--text); }
@@ -387,7 +389,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 08:23</span>
+    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 08:28</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
