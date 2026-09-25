@@ -477,7 +477,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 25/09/2026 08:28</span>
+    <span class="hero-generated" id="statGenerado">Generado 25/09/2026 08:37</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -806,42 +806,6 @@ function logVisita() {
   supabaseInsert("visitas", { user_agent: navigator.userAgent, referrer: document.referrer || null });
 }
 
-// --- Validacion de calidad de datos (celular CO + correo) ---
-// Controles limitados, 100% client-side y sin costo -- no hay backend propio para
-// verificar por SMS ni consultar el registro MX real de un dominio (eso requeriria
-// un servicio pago tipo Twilio/NumVerify o una funcion serverless). Esto no elimina
-// leads falsos, pero descarta los mas obvios: formato invalido, o un dominio
-// claramente inventado / de correo temporal.
-const CORREO_DOMINIOS_FALSOS = new Set([
-  "example.com", "test.com", "correo.com", "prueba.com", "ejemplo.com", "asdf.com",
-  "aaa.com", "xxx.com", "email.com", "noexiste.com", "tucorreo.com", "nomail.com",
-  "fake.com", "temp.com", "mailinator.com", "guerrillamail.com", "10minutemail.com",
-  "yopmail.com", "tempmail.com", "trashmail.com", "throwawaymail.com",
-  "sharklasers.com", "dispostable.com", "mailnesia.com",
-]);
-
-function normalizarCelularCO(v) {
-  let s = (v || "").replace(/[\s().-]/g, "");
-  s = s.replace(/^\+?57/, "").replace(/^0+/, "");
-  return s;
-}
-
-// Celular movil colombiano: 10 digitos, siempre inicia en 3 (sin restringir el
-// prefijo exacto -- los operadores han ido ampliando los rangos 300-350 con los
-// anos, una lista fija de prefijos rechazaria numeros reales nuevos).
-function celularEsValido(v) {
-  return /^3\d{9}$/.test(normalizarCelularCO(v));
-}
-
-function correoEsValido(v) {
-  const correo = (v || "").trim().toLowerCase();
-  if (!correo) return false;
-  const formatoOk = /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(correo);
-  if (!formatoOk) return false;
-  const dominio = correo.split("@")[1];
-  return !CORREO_DOMINIOS_FALSOS.has(dominio);
-}
-
 function initGate() {
   const overlay = document.getElementById("gateOverlay");
   if (localStorage.getItem("ba_gate_done")) return;
@@ -852,26 +816,12 @@ function initGate() {
     const celular = document.getElementById("gateCelular").value.trim();
     const correo = document.getElementById("gateCorreo").value.trim();
     const acepto = document.getElementById("gateAcepto").checked;
-    const errEl = document.getElementById("gateError");
     if (!nombre || !celular || !correo || !acepto) {
-      errEl.textContent = "Completa los 3 campos y acepta el aviso de tratamiento de datos para continuar.";
-      errEl.style.display = "block";
+      document.getElementById("gateError").style.display = "block";
       return;
     }
-    if (!celularEsValido(celular)) {
-      errEl.textContent = "Ingresa un celular colombiano válido: 10 dígitos, iniciando en 3 (ej: 300 123 4567).";
-      errEl.style.display = "block";
-      return;
-    }
-    if (!correoEsValido(correo)) {
-      errEl.textContent = "Ingresa un correo electrónico válido (ej: tucorreo@ejemplo.com).";
-      errEl.style.display = "block";
-      return;
-    }
-    errEl.style.display = "none";
-    const celularNormalizado = "+57" + normalizarCelularCO(celular);
     supabaseInsert("visitantes_gate", {
-      nombre, celular: celularNormalizado, correo,
+      nombre, celular, correo,
       autoriza_datos: true,
       aviso_version: "2026-09-24",
     });
@@ -1089,12 +1039,6 @@ function renderObservaciones() {
     const msgEl = document.getElementById("obsMsg");
     if (!mensaje) {
       msgEl.textContent = "Escribe un mensaje antes de enviar.";
-      msgEl.className = "obs-msg err";
-      msgEl.style.display = "block";
-      return;
-    }
-    if (correo && !correoEsValido(correo)) {
-      msgEl.textContent = "El correo electrónico no parece válido — revísalo o déjalo vacío.";
       msgEl.className = "obs-msg err";
       msgEl.style.display = "block";
       return;
