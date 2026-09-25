@@ -314,6 +314,10 @@ table.predtable tr.included td { color: var(--text); }
 table.predtable td.num-good { color: var(--green); font-weight: 600; background: var(--green-bg); }
 table.predtable td.num-warn { color: var(--yellow); font-weight: 600; background: var(--yellow-bg); }
 table.predtable td.num-bad { color: var(--red); font-weight: 600; background: var(--red-bg); }
+table.predtable th:first-child, table.predtable td:first-child {
+  position: sticky; left: 0; z-index: 2; background: var(--bg-card);
+  box-shadow: 2px 0 4px -2px rgba(0,0,0,.5);
+}
 
 table.grouptable { border-collapse: collapse; margin: 8px 0; font-size: 12px; }
 table.grouptable th, table.grouptable td { padding: 4px 9px; border-bottom: 1px solid var(--border); text-align: center; }
@@ -477,7 +481,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 25/09/2026 08:37</span>
+    <span class="hero-generated" id="statGenerado">Generado 25/09/2026 09:49</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
