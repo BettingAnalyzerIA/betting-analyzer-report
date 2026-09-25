@@ -133,6 +133,15 @@ a { color: var(--accent); }
   .tabbar { flex-wrap: wrap; }
   .tabbtn { flex: 1 1 45%; font-size: 11.5px; padding: 8px 6px; }
   .tabbtn-primary { flex-basis: 100%; }
+  .topbar { flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 8px 14px 6px; }
+  .topbar-watermark { display: none; }
+  .topbar-brandblock { min-height: 0; padding: 0; }
+  .topbar-brand { font-size: 23px; }
+  .topbar-slogan { justify-content: center; text-align: center; max-width: 100%; }
+  .topbar-right { width: 100%; align-items: center; }
+  .stats { justify-content: center; }
+  .stats-note { padding: 3px 14px 6px; }
+  .hero-row { padding: 8px 12px; gap: 6px; }
 }
 .tabbtn-primary:not(.active) { background: var(--accent-soft); color: var(--text); }
 
@@ -148,6 +157,18 @@ a { color: var(--accent); }
   border-radius: 999px; padding: 4px 11px; font-size: 11.5px; cursor: pointer;
 }
 .ld-actions button:hover { background: var(--bg-hover); color: var(--text); }
+.ld-actions .ld-close { margin-left: auto; border-color: var(--accent); color: var(--accent); }
+.active-filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+.active-filter-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent-soft); border: 1px solid var(--accent); color: var(--text);
+  border-radius: 999px; padding: 4px 8px 4px 12px; font-size: 12px; white-space: nowrap;
+}
+.active-filter-chip button {
+  background: none; border: none; color: var(--text); opacity: .75; cursor: pointer;
+  font-size: 13px; line-height: 1; padding: 2px;
+}
+.active-filter-chip button:hover { opacity: 1; }
 .liga-item {
   display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px;
   cursor: pointer; font-size: 13px; color: var(--text-dim);
@@ -394,7 +415,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 20:11</span>
+    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 20:51</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -789,6 +810,7 @@ function renderLigaDropdown(counts) {
   let htmlStr = `<div class="ld-actions">
     <button id="ldSelectAll">Seleccionar todas</button>
     <button id="ldClearAll">Limpiar</button>
+    <button id="ldClose" class="ld-close">✕ Cerrar</button>
   </div>`;
   const torneosPorCantidad = [...TORNEOS].sort((a, b) => (counts[b]||0) - (counts[a]||0));
   torneosPorCantidad.forEach(t => {
@@ -822,6 +844,7 @@ function renderLigaDropdown(counts) {
     updateLigasCount();
     if (currentTab === "ligas") renderLigasSeleccionadas();
   });
+  document.getElementById("ldClose").addEventListener("click", () => toggleLigaDropdown(false));
 }
 
 function updateLigasCount() {
@@ -831,14 +854,35 @@ function updateLigasCount() {
   if (btn) btn.classList.toggle("has-selection", selectedLigas.size > 0);
 }
 
+// Posiciona un panel desplegable (liga/categoria) sin que quede cortado por
+// el borde de la pantalla -- en movil se centra como un panel fijo en vez de
+// anclarse al boton, porque anclado al boton frecuentemente quedaba con la
+// mayor parte fuera del viewport (el scroll de la pagina no mueve un
+// position:fixed, asi que esa parte invisible era irrecuperable).
+function positionDropdown(dd, btn) {
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile) {
+    dd.style.width = "94vw";
+    dd.style.maxWidth = "94vw";
+    dd.style.maxHeight = "80vh";
+    dd.style.left = "3vw";
+    dd.style.top = "8vh";
+  } else {
+    const r = btn.getBoundingClientRect();
+    dd.style.width = "";
+    dd.style.maxWidth = "90vw";
+    dd.style.maxHeight = "65vh";
+    dd.style.left = Math.min(r.left, window.innerWidth - 360) + "px";
+    dd.style.top = Math.min(r.bottom + 6, window.innerHeight - 250) + "px";
+  }
+}
+
 function toggleLigaDropdown(forceOpen) {
   const dd = document.getElementById("ligaDropdown");
   const btn = document.getElementById("ligasBtn");
   const willShow = forceOpen !== undefined ? forceOpen : dd.classList.contains("hidden");
   if (willShow) {
-    const r = btn.getBoundingClientRect();
-    dd.style.top = (r.bottom + 6) + "px";
-    dd.style.left = Math.min(r.left, window.innerWidth - 360) + "px";
+    positionDropdown(dd, btn);
     dd.classList.remove("hidden");
   } else {
     dd.classList.add("hidden");
@@ -942,8 +986,13 @@ function renderLigasSeleccionadas() {
   const resueltos = fmtDateSort(all.filter(r => r.resultado_real && r.resultado_real.trim()), 1);
   const ligasLabel = [...selectedLigas].sort().join(", ");
 
+  const chipsHtml = [...selectedLigas].sort().map(t =>
+    `<span class="active-filter-chip" data-torneo="${esc(t)}">${esc(t)} <button aria-label="Quitar liga">✕</button></span>`
+  ).join("") + `<button class="filterchip" id="ligasChipsClear">Limpiar filtro de ligas</button>`;
+
   main.innerHTML = `
     <div class="section-title">🏆 ${esc(ligasLabel)}</div>
+    <div class="active-filter-chips">${chipsHtml}</div>
     <div class="section-title">🔮 Pronósticos <span class="count">${pendientes.length} partido(s)</span></div>
     <div class="filters" id="filters-pend"></div>
     <div class="cards" id="cards-pend"></div>
@@ -952,6 +1001,26 @@ function renderLigasSeleccionadas() {
     <div class="filters" id="filters-res"></div>
     <div class="cards" id="cards-res"></div>
   `;
+
+  main.querySelectorAll(".active-filter-chip button").forEach(b => {
+    b.addEventListener("click", () => {
+      const t = b.parentElement.dataset.torneo;
+      selectedLigas.delete(t);
+      updateLigasCount();
+      const cb = document.querySelector(`#ligaDropdown .liga-item[data-torneo="${CSS.escape(t)}"] input`);
+      if (cb) { cb.checked = false; cb.closest(".liga-item").classList.remove("checked"); }
+      renderLigasSeleccionadas();
+    });
+  });
+  document.getElementById("ligasChipsClear").addEventListener("click", () => {
+    selectedLigas.clear();
+    updateLigasCount();
+    document.querySelectorAll("#ligaDropdown .liga-item").forEach(item => {
+      item.classList.remove("checked");
+      item.querySelector("input").checked = false;
+    });
+    renderLigasSeleccionadas();
+  });
 
   setupFilterGroup("filters-pend", "cards-pend", pendientes,
     [["Todos", null], ["Con apuesta", "apuesta"], ["Sin apuesta", "sinapuesta"], ["No apostar", "NO APOSTAR"]], multi);
@@ -994,9 +1063,7 @@ function toggleCatDropdown(forceOpen) {
   if (!dd || !btn) return;
   const willShow = forceOpen !== undefined ? forceOpen : dd.classList.contains("hidden");
   if (willShow) {
-    const r = btn.getBoundingClientRect();
-    dd.style.top = (r.bottom + 6) + "px";
-    dd.style.left = Math.min(r.left, window.innerWidth - 360) + "px";
+    positionDropdown(dd, btn);
     dd.classList.remove("hidden");
   } else {
     dd.classList.add("hidden");
@@ -1025,6 +1092,7 @@ function renderPendientesDia() {
       <div class="filters" id="filters-fecha-dia"></div>
       <div class="filters" id="filters-pendientes-dia"></div>
       <div class="filters" id="filters-hora-dia"></div>
+      <div class="active-filter-chips" id="filters-cat-chips"></div>
       ${LOGO_SRC ? `<img class="pdd-brand-logo" src="${LOGO_SRC}" alt="Betting Analyzer">` : ""}
     </div>
     <div class="cards" id="cards-pendientes-dia"></div>
@@ -1080,6 +1148,7 @@ function renderPendientesDia() {
     let h = `<div class="ld-actions">
       <button id="catSelectAll">Seleccionar todas</button>
       <button id="catClearAll">Limpiar</button>
+      <button id="catClose" class="ld-close">✕ Cerrar</button>
     </div>`;
     CATEGORIA_ORDEN.forEach(c => {
       const checked = selectedCategorias.has(c) ? "checked" : "";
@@ -1096,16 +1165,18 @@ function renderPendientesDia() {
         item.classList.toggle("checked", cb.checked);
         updateCatCount();
         applyAll();
+        renderCatChips();
       });
     });
     document.getElementById("catSelectAll").addEventListener("click", () => {
       CATEGORIA_ORDEN.forEach(c => selectedCategorias.add(c));
-      renderCatDropdown(); updateCatCount(); applyAll();
+      renderCatDropdown(); updateCatCount(); applyAll(); renderCatChips();
     });
     document.getElementById("catClearAll").addEventListener("click", () => {
       selectedCategorias.clear();
-      renderCatDropdown(); updateCatCount(); applyAll();
+      renderCatDropdown(); updateCatCount(); applyAll(); renderCatChips();
     });
+    document.getElementById("catClose").addEventListener("click", () => toggleCatDropdown(false));
   }
   function updateCatCount() {
     const el = document.getElementById("catFilterCount");
@@ -1113,7 +1184,30 @@ function renderPendientesDia() {
     const btn = document.getElementById("catFilterBtn");
     if (btn) btn.classList.toggle("has-selection", selectedCategorias.size > 0);
   }
+  // Chips de categorias activas, visibles siempre (sin reabrir el desplegable)
+  // para poder quitar una sola con un clic -- antes solo se podia desmarcar
+  // reabriendo el panel completo y buscando el check entre 7 categorias.
+  function renderCatChips() {
+    const el = document.getElementById("filters-cat-chips");
+    if (!el) return;
+    if (!selectedCategorias.size) { el.innerHTML = ""; return; }
+    el.innerHTML = [...selectedCategorias].sort().map(c =>
+      `<span class="active-filter-chip" data-cat="${esc(c)}">${esc(c)} <button aria-label="Quitar categoria">✕</button></span>`
+    ).join("") + `<button class="filterchip" id="catChipsClear">Limpiar categorias</button>`;
+    el.querySelectorAll(".active-filter-chip button").forEach(b => {
+      b.addEventListener("click", () => {
+        const c = b.parentElement.dataset.cat;
+        selectedCategorias.delete(c);
+        renderCatDropdown(); updateCatCount(); applyAll(); renderCatChips();
+      });
+    });
+    document.getElementById("catChipsClear").addEventListener("click", () => {
+      selectedCategorias.clear();
+      renderCatDropdown(); updateCatCount(); applyAll(); renderCatChips();
+    });
+  }
   renderCatDropdown();
+  renderCatChips();
   document.getElementById("catFilterBtn").addEventListener("click", (e) => {
     e.stopPropagation();
     toggleCatDropdown();
