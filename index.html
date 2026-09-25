@@ -372,6 +372,15 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
 }
 .gate-submit:hover { opacity: .92; }
 .gate-error { color: var(--red); font-size: 11.5px; margin-top: 8px; display: none; }
+.gate-aviso {
+  margin: 4px 0 14px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  background: var(--bg);
+}
+.gate-aviso summary { font-size: 11.5px; color: var(--text-faint); cursor: pointer; user-select: none; }
+.gate-aviso p { font-size: 11px; color: var(--text-faint); line-height: 1.55; margin: 8px 0 0; }
+.gate-checkbox { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.gate-checkbox input { margin-top: 3px; flex-shrink: 0; }
+.gate-checkbox label { font-size: 11.5px; color: var(--text-faint); line-height: 1.45; }
 
 /* Observaciones / contacto */
 .obs-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; margin: 10px 0 30px; }
@@ -425,8 +434,36 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
         <label for="gateCorreo">Correo electrónico</label>
         <input type="email" id="gateCorreo" required>
       </div>
+      <details class="gate-aviso">
+        <summary>Aviso de tratamiento de datos personales</summary>
+        <p>
+          <b>Betting Analyzer IA</b> es responsable del tratamiento de los datos personales que nos
+          suministras en este formulario (nombre, celular y correo electrónico). <b>Finalidad:</b> usarlos
+          para contactarte, informarte sobre mejoras del modelo, contenido nuevo y ofertas de acceso al
+          servicio. No compartimos, vendemos ni cedemos tus datos a casas de apuestas ni a ningún tercero
+          ajeno a la operación de este servicio.
+        </p>
+        <p>
+          Como titular de tus datos tienes derecho a: conocer, actualizar y rectificar tu información;
+          solicitar prueba de esta autorización; ser informado sobre el uso dado a tus datos; revocar esta
+          autorización y/o solicitar la supresión de tus datos cuando no exista un deber legal o contractual
+          que lo impida; acceder de forma gratuita a ellos; y presentar quejas ante la Superintendencia de
+          Industria y Comercio (SIC) si consideras que hemos infringido la ley. Para ejercer estos derechos,
+          escríbenos a bettinganalyzeria@gmail.com.
+        </p>
+        <p>
+          Este sitio también registra automáticamente datos técnicos de navegación (navegador, referencia de
+          origen) con fines estadísticos internos, sin identificarte individualmente. Este servicio no está
+          dirigido a menores de edad y no recolectamos intencionalmente datos de menores.
+        </p>
+      </details>
+      <div class="gate-checkbox">
+        <input type="checkbox" id="gateAcepto">
+        <label for="gateAcepto">He leído el aviso anterior y autorizo expresa, libre y voluntariamente el
+          tratamiento de mis datos personales conforme a lo descrito y a la Ley 1581 de 2012.</label>
+      </div>
       <button type="submit" class="gate-submit">Ingresar al reporte</button>
-      <div class="gate-error" id="gateError">Completa los 3 campos para continuar.</div>
+      <div class="gate-error" id="gateError">Completa los 3 campos y acepta el aviso de tratamiento de datos para continuar.</div>
     </form>
   </div>
 </div>
@@ -440,7 +477,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 21:38</span>
+    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 21:40</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -778,11 +815,16 @@ function initGate() {
     const nombre = document.getElementById("gateNombre").value.trim();
     const celular = document.getElementById("gateCelular").value.trim();
     const correo = document.getElementById("gateCorreo").value.trim();
-    if (!nombre || !celular || !correo) {
+    const acepto = document.getElementById("gateAcepto").checked;
+    if (!nombre || !celular || !correo || !acepto) {
       document.getElementById("gateError").style.display = "block";
       return;
     }
-    supabaseInsert("visitantes_gate", { nombre, celular, correo });
+    supabaseInsert("visitantes_gate", {
+      nombre, celular, correo,
+      autoriza_datos: true,
+      aviso_version: "2026-09-24",
+    });
     localStorage.setItem("ba_gate_done", "1");
     overlay.classList.add("hidden");
   });
@@ -966,6 +1008,12 @@ function renderObservaciones() {
             <label for="obsMensaje">Mensaje</label>
             <textarea id="obsMensaje" rows="5" placeholder="¿En qué podemos ayudarte?" required></textarea>
           </div>
+          <div class="gate-checkbox">
+            <input type="checkbox" id="obsAcepto">
+            <label for="obsAcepto">Autorizo el tratamiento de los datos que comparto en este formulario
+              (nombre, correo y mensaje) para que Betting Analyzer IA pueda darme respuesta, conforme a la
+              Ley 1581 de 2012. No se comparten con casas de apuestas ni terceros ajenos a este servicio.</label>
+          </div>
           <button type="submit" class="obs-submit">Enviar mensaje</button>
           <div class="obs-msg" id="obsMsg"></div>
         </form>
@@ -987,6 +1035,7 @@ function renderObservaciones() {
     const nombre = document.getElementById("obsNombre").value.trim();
     const correo = document.getElementById("obsCorreo").value.trim();
     const mensaje = document.getElementById("obsMensaje").value.trim();
+    const acepto = document.getElementById("obsAcepto").checked;
     const msgEl = document.getElementById("obsMsg");
     if (!mensaje) {
       msgEl.textContent = "Escribe un mensaje antes de enviar.";
@@ -994,7 +1043,17 @@ function renderObservaciones() {
       msgEl.style.display = "block";
       return;
     }
-    supabaseInsert("observaciones", { nombre: nombre || null, correo: correo || null, mensaje });
+    if (!acepto) {
+      msgEl.textContent = "Acepta el tratamiento de datos personales antes de enviar.";
+      msgEl.className = "obs-msg err";
+      msgEl.style.display = "block";
+      return;
+    }
+    supabaseInsert("observaciones", {
+      nombre: nombre || null, correo: correo || null, mensaje,
+      autoriza_datos: true,
+      aviso_version: "2026-09-24",
+    });
     document.getElementById("obsForm").reset();
     msgEl.textContent = "¡Gracias! Tu mensaje fue enviado.";
     msgEl.className = "obs-msg ok";
