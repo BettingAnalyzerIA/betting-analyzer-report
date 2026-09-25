@@ -440,7 +440,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 21:32</span>
+    <span class="hero-generated" id="statGenerado">Generado 24/09/2026 21:38</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -1295,6 +1295,19 @@ let calibMercadoSel = "todos";
 let calibBucketSel = "todos";
 let calibAmbitoSel = "sinapuesta";
 
+// Umbral pedido por el usuario 2026-09-24 tras detectar un caso real (Rosario
+// Central vs Universidad Central, Copa Lib): ese partido declaraba IC en 8
+// mercados pero solo 1X2 tenia cuota real -- sin filtro, aparecia repetido en
+// casi todos los buckets de IC solo por tener confianza declarada, sin nunca
+// haberse contrastado contra un precio de mercado real. Regla: solo cuenta
+// una prediccion si tiene cuota Y su edge (IC - probabilidad implicita, ya
+// calculado en build_records()) no es peor que -1pp -- cubre tanto "el IC
+// supera la cuota" (edge positivo) como "el IC esta a lo sumo 1pp por debajo"
+// (ej. IC 82% vs cuota que implica 83%). El caso Rosario Central queda fuera
+// por completo: su unico mercado con cuota real (1X2, IC 82% vs 84.7%
+// implicito) tiene edge=-2.7, peor que el limite.
+const CALIB_EDGE_MIN = -1;
+
 function calibFiltered() {
   const matchesMap = new Map();
   let si = 0, no = 0;
@@ -1302,6 +1315,7 @@ function calibFiltered() {
     if (calibAmbitoSel === "sinapuesta" && r.estado !== "SIN APUESTA") return;
     (r.predicciones || []).forEach(p => {
       if (calibMercadoSel !== "todos" && p.mercado !== calibMercadoSel) return;
+      if (p.cuota == null || p.edge == null || p.edge < CALIB_EDGE_MIN) return;
       if (p.resultado_mkt_bruto !== "SI" && p.resultado_mkt_bruto !== "NO") return;
       if (calibBucketSel !== "todos" && bucketDe(p.confianza) !== calibBucketSel) return;
       if (p.resultado_mkt_bruto === "SI") si += 1; else no += 1;
@@ -1327,6 +1341,10 @@ function renderCalibracion() {
       ninguna casa de apuestas, no vende ni gestiona apuestas, y no apuesta dinero de nadie. Solo publica
       evidencia de cómo se comportó el modelo frente a resultados ya conocidos, para que cada persona
       decida por su cuenta, con su propio dinero y en la plataforma que elija.
+      <br><br>
+      Solo se cuentan aquí predicciones que tuvieron una <b>cuota real de mercado</b> registrada en su
+      momento y cuyo IC no estuvo más de 1 punto porcentual por debajo de lo que esa cuota ya implicaba
+      -- así se evita mostrar confianza declarada que nunca se contrastó contra un precio real.
     </div>
     <div class="calib-filters">
       <div class="calib-filter-group">
