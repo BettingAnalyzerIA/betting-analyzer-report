@@ -481,7 +481,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 01/10/2026 09:09</span>
+    <span class="hero-generated" id="statGenerado">Generado 01/10/2026 09:13</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -770,6 +770,13 @@ prob_implicita = 1 / cuota</code></pre>
 <p><b>Fuentes activas:</b></p>
 <ul><li><b>API-Football</b> — cuotas (Bet365), bajas/lesiones, enfrentamientos directos, estadísticas de partidos ya jugados. Fuente primaria del proyecto desde agosto de 2026.</li><li><b>Highlightly</b> y <b>SofaScore</b> (vía Apify) — forma reciente, promedios de córners/tarjetas/remates a portería, especialmente en ligas donde API-Football no cubre estadísticas de temporada (Liga BetPlay Colombia, Copa Libertadores/Sudamericana, Liga Profesional Argentina, Brasileirao).</li><li><b>Transfermarkt</b> (vía Apify) — valor de mercado y tendencia de jugadores, para ponderar qué tan grave es una baja confirmada.</li><li><b>FotMob</b> (vía Apify) — rendimiento individual reciente de un jugador.</li></ul>
 <p><b>Por qué no aparece el nombre de la fuente en cada pronóstico:</b> el método de consulta y combinación de estas fuentes es el trabajo propio del proyecto — mostrarlo partido por partido no le añade valor al lector y facilita que cualquiera copie el proceso sin el filtro de análisis que hay detrás. Lo que importa para evaluar un pronóstico es el dato (la cuota, el marcador, la racha), no el proveedor del que salió.</p>
+<hr>
+<h2>Top-5 Ausentes</h2>
+<p><b>Qué es:</b> chequeo que identifica, para cada equipo de un partido, a sus jugadores de mayor valor de mercado (el &quot;top&quot; real del plantel) y verifica si alguno está ausente — y por qué.</p>
+<p><b>Cómo funciona:</b> se ordena el plantel de cada equipo por valor de mercado y se cruza esa lista contra las bajas/lesiones confirmadas antes del partido y, cerca o después del inicio, contra la alineación titular real. Esto detecta ausencias relevantes que el texto manual de &quot;bajas&quot; pudo pasar por alto — no toda ausencia importante es evidente a simple vista para quien redacta el análisis.</p>
+<p><b>Estados posibles para cada jugador del top:</b></p>
+<ul><li><b>Lesionado / Duda</b> — aparece confirmado en la fuente de bajas.</li><li><b>Titular / Suplente</b> — el partido ya empezó y aparece en la alineación real.</li><li><b>Sin verificar</b> — el partido aún no empieza y no aparece en bajas (lo esperable: se asume que va a jugar).</li><li><b>ALERTA — verificar manualmente</b> — no aparece ni en bajas ni en la alineación real. No es una afirmación de que el jugador esté ausente; es una señal de que ese dato puntual necesita revisión antes de confiar en el análisis (puede ser una convocatoria especial, una decisión técnica sin reportar como lesión, o un vacío de la fuente consultada).</li></ul>
+<p><b>Por qué importa:</b> la ausencia de un jugador clave (el goleador principal, el defensa central titular) puede cambiar el pronóstico real de un partido mucho más de lo que refleja la cuota del mercado en el momento del análisis. Este chequeo existe para que esas ausencias no pasen desapercibidas solo porque no fueron mencionadas en una fuente de bajas incompleta.</p>
 <hr>
 <h2>Valor (Value Bet)</h2>
 <p><b>Qué es:</b> Una apuesta tiene valor cuando la probabilidad estimada supera la probabilidad implícita de la cuota más el margen del bookmaker.</p>
