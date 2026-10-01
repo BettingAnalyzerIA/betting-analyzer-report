@@ -481,7 +481,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 01/10/2026 08:23</span>
+    <span class="hero-generated" id="statGenerado">Generado 01/10/2026 09:09</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -764,6 +764,12 @@ prob_implicita = 1 / cuota</code></pre>
 <p><b>9 categorías (ver <code>references/conditions.md</code> para detalle completo):</b></p>
 <ol><li>Objetivo ya asegurado / eliminado (rotaciones probables)</li><li>Clásico / rivalidad histórica (invalida ventaja estadística del favorito)</li><li>Presión diferencial de descenso</li><li>Lesión de portero o goleador principal</li><li>H2H con patrón claro y consistente</li><li>Crisis institucional activa</li><li>Campeón con rotación masiva en campo desesperado</li><li>Visitante necesita solo empate para clasificar / ganar título</li><li>Visitante con ≥2 delanteros titulares OUT</li></ol>
 <p><b>Regla de acumulación:</b> Si ≥3 condiciones activas simultáneamente → considerar No Apostar.</p>
+<hr>
+<h2>Fuentes de Datos del Modelo</h2>
+<p><b>Qué es:</b> el conjunto de fuentes externas que el modelo consulta para armar cada pronóstico — cuotas reales, lesiones/bajas, enfrentamientos directos (H2H), forma reciente, estadísticas de córners/tarjetas/remates y valor de mercado de jugadores. Son datos estructurados consultados en vivo, no investigación manual ni opinión.</p>
+<p><b>Fuentes activas:</b></p>
+<ul><li><b>API-Football</b> — cuotas (Bet365), bajas/lesiones, enfrentamientos directos, estadísticas de partidos ya jugados. Fuente primaria del proyecto desde agosto de 2026.</li><li><b>Highlightly</b> y <b>SofaScore</b> (vía Apify) — forma reciente, promedios de córners/tarjetas/remates a portería, especialmente en ligas donde API-Football no cubre estadísticas de temporada (Liga BetPlay Colombia, Copa Libertadores/Sudamericana, Liga Profesional Argentina, Brasileirao).</li><li><b>Transfermarkt</b> (vía Apify) — valor de mercado y tendencia de jugadores, para ponderar qué tan grave es una baja confirmada.</li><li><b>FotMob</b> (vía Apify) — rendimiento individual reciente de un jugador.</li></ul>
+<p><b>Por qué no aparece el nombre de la fuente en cada pronóstico:</b> el método de consulta y combinación de estas fuentes es el trabajo propio del proyecto — mostrarlo partido por partido no le añade valor al lector y facilita que cualquiera copie el proceso sin el filtro de análisis que hay detrás. Lo que importa para evaluar un pronóstico es el dato (la cuota, el marcador, la racha), no el proveedor del que salió.</p>
 <hr>
 <h2>Valor (Value Bet)</h2>
 <p><b>Qué es:</b> Una apuesta tiene valor cuando la probabilidad estimada supera la probabilidad implícita de la cuota más el margen del bookmaker.</p>
