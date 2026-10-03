@@ -481,7 +481,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 03/10/2026 07:19</span>
+    <span class="hero-generated" id="statGenerado">Generado 03/10/2026 07:20</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -1225,8 +1225,8 @@ function renderPendientesDia() {
 
   function applyAll() {
     let list = curFecha ? pendientes.filter(r => r.fecha === curFecha) : pendientes;
-    if (curEstado === "apuesta") list = list.filter(r => !r.no_apostar && r.combinada && !/^SIN APUESTA/i.test(r.combinada) && !/^N\/A/i.test(r.combinada));
-    else if (curEstado === "sinapuesta") list = list.filter(r => !r.no_apostar && (!r.combinada || /^SIN APUESTA/i.test(r.combinada) || /^N\/A/i.test(r.combinada)));
+    if (curEstado === "apuesta") list = list.filter(r => !r.no_apostar && r.combinada && !/^SIN APUESTA/i.test(r.combinada) && !r.combinada.toUpperCase().startsWith("N/A"));
+    else if (curEstado === "sinapuesta") list = list.filter(r => !r.no_apostar && (!r.combinada || /^SIN APUESTA/i.test(r.combinada) || r.combinada.toUpperCase().startsWith("N/A")));
     else if (curEstado) list = list.filter(r => r.estado === curEstado);
     if (curHora) list = list.filter(r => horaBucket(r.hora) === curHora);
     if (selectedCategorias.size) list = list.filter(r => selectedCategorias.has(r.categoria || "Otras ligas"));
@@ -1505,8 +1505,8 @@ function setupFilterGroup(filterElId, cardsElId, records, options, showTorneo) {
     `<button class="filterchip ${i===0?'active':''}" data-val="${o[1]||''}">${o[0]}</button>`).join("");
   function apply(val) {
     let list = records;
-    if (val === "apuesta") list = records.filter(r => !r.no_apostar && r.combinada && !/^SIN APUESTA/i.test(r.combinada) && !/^N\/A/i.test(r.combinada));
-    else if (val === "sinapuesta") list = records.filter(r => !r.no_apostar && (!r.combinada || /^SIN APUESTA/i.test(r.combinada) || /^N\/A/i.test(r.combinada)));
+    if (val === "apuesta") list = records.filter(r => !r.no_apostar && r.combinada && !/^SIN APUESTA/i.test(r.combinada) && !r.combinada.toUpperCase().startsWith("N/A"));
+    else if (val === "sinapuesta") list = records.filter(r => !r.no_apostar && (!r.combinada || /^SIN APUESTA/i.test(r.combinada) || r.combinada.toUpperCase().startsWith("N/A")));
     else if (val) list = records.filter(r => r.estado === val);
     renderCards(cardsElId, list, showTorneo);
   }
@@ -1610,7 +1610,7 @@ function cardBody(r) {
 
   if (r.nota_redundancia) out += `<div class="nota-redun">${esc(r.nota_redundancia)}</div>`;
   if (r.analisis) out += `<div class="analisis-text">${esc(r.analisis)}</div>`;
-  if (r.combinada) out += `<div class="combo-box ${(r.no_apostar || /^(SIN APUESTA|N\/A)/i.test(r.combinada))?'sinapuesta':''}">★ ${esc(r.combinada)}</div>`;
+  if (r.combinada) out += `<div class="combo-box ${(r.no_apostar || /^SIN APUESTA/i.test(r.combinada) || r.combinada.toUpperCase().startsWith("N/A"))?'sinapuesta':''}">★ ${esc(r.combinada)}</div>`;
   if (r.riesgo) out += `<div class="riesgo-box">⚠ Riesgo: ${esc(r.riesgo)}</div>`;
   if (r.resultado_real) {
     out += `<div class="result-box ${r.estado}"><b>Resultado real:</b> ${esc(r.resultado_real)}<br><b>Evaluación:</b> ${esc(r.eval_combinada)}</div>`;
