@@ -490,7 +490,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 06/10/2026 13:32</span>
+    <span class="hero-generated" id="statGenerado">Generado 06/10/2026 13:43</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -683,6 +683,7 @@ prob_implicita = 1 / cuota</code></pre>
 <h2>BTTS — Both Teams To Score (Ambos Equipos Marcan) (NO Recomendado)</h2>
 <p><b>Qué es:</b> Mercado que pregunta si ambos equipos marcarán al menos un gol en el partido.</p>
 <p><b>Por qué aparece marcado como NO Recomendado:</b> en la auditoría completa del proyecto (572 partidos, n=520 predicciones de BTTS con resultado real), el acierto por bucket de confianza declarada sale prácticamente plano: <code>&lt;65%</code> acierta 51.5%, <code>65-69%</code> 55.5%, <code>70-74%</code> 57.4%, <code>75-79%</code> 52.9%, <code>80+%</code> 50.0% (n=4). A diferencia de 1X2 o 2.5 Goles — donde declarar más confianza sí se traduce en más acierto real — en BTTS el modelo acierta prácticamente lo mismo diga lo que diga. Eso es distinto (y peor) que &quot;un mercado difícil&quot;: un número de confianza que no discrimina es un número que aparenta precisión sin tenerla. Por eso se etiqueta como no recomendado en vez de solo bajarle el umbral.</p>
+<p><b>Excepción — el aviso desaparece cuando SÍ es la apuesta real recomendada del partido.</b> El problema de calibración es sobre confiar en el IC crudo por sí solo. Cuando un análisis incluye BTTS como <code>combinada</code> (include=True), ya pasó la verificación completa (margen real exacto, breakeven, anti-redundancia, lectura cualitativa) — no es &quot;el modelo declaró 72%&quot;, es una apuesta vetada a mano. Caso real que expuso esta distinción (06/10/2026): Escocia-Eslovenia, <code>SINGLE: BTTS No @ 1.62</code>, era el único partido de toda la jornada con Neto real positivo (+3.1pp verificado) — mostrar el aviso genérico ahí habría contradicho la propia recomendación. El reporte ya no muestra la etiqueta en esos casos.</p>
 <ul><li><b>BTTS=Sí</b>: ambos equipos marcan → resultado como 1-1, 2-1, 1-2, 2-2, etc.</li><li><b>BTTS=No</b>: al menos un equipo no marca → resultado como 1-0, 0-2, 0-0, 3-0, etc.</li></ul>
 <p><b>Matriz de decisión</b> (por equipo, usando estadísticas en su rol):</p>
 <div style="overflow-x:auto"><table class="glos-table"><thead><tr>
@@ -1447,7 +1448,18 @@ const MARKET_DISPLAY_SUFFIX = {
   "Remates Porteria": " (Sin Verificar)",
   "Handicap Asiatico": " (Muestra Insuficiente)",
 };
-function marketDisplayName(m) {
+// El aviso de BTTS/Handicap Asiatico es sobre confiar en el IC CRUDO sin mas
+// -- deja de aplicar cuando include=True, porque esa fila ya paso la
+// verificacion manual completa (margen real, breakeven, anti-redundancia),
+// no es "el modelo declaro X%". Caso real que lo expuso (06/10/2026):
+// Escocia-Eslovenia, BTTS No @ 1.62 era el UNICO value bet real de la
+// jornada (neto +3.1pp verificado) y el aviso generico lo contradecia.
+// Corners/Tarjetas/Remates Porteria NO entran en esta excepcion -- su
+// problema es que nunca se puede confirmar el resultado real, eso no
+// cambia aunque la fila sea include=True.
+const MARKET_SUFFIX_SKIP_IF_INCLUDED = new Set(["BTTS", "Handicap Asiatico"]);
+function marketDisplayName(m, included) {
+  if (included && MARKET_SUFFIX_SKIP_IF_INCLUDED.has(m)) return m;
   return m + (MARKET_DISPLAY_SUFFIX[m] || "");
 }
 const BUCKETS_CALIB = ["todos", "<65", "65-69", "70-74", "75-79", "80+"];
@@ -1679,7 +1691,7 @@ function cardBody(r) {
       const netCls = p.neto === null ? "" : (p.neto > 0 ? "num-good" : "num-bad");
       const netTxt = p.neto === null ? "—" : (p.neto >= 0 ? "+" + p.neto + "%" : p.neto + "%");
       out += `<tr class="${p.include?'included':''} ${p.valor_emergente?'valor-emergente':''}">
-        <td>${esc(marketDisplayName(p.mercado))}</td>
+        <td>${esc(marketDisplayName(p.mercado, p.include))}</td>
         <td>${esc(p.prediccion)}${p.valor_emergente ? '<span class="badge-emergente" title="IC>=75% y ya es +EV real (neto>=0) tras descontar el margen del mercado, aunque hoy no sea la apuesta recomendada del partido">⚡ Valor emergente</span>' : ''}</td>
         <td><span class="conf-pill ${confClass(p.confianza)}">${p.confianza}%</span></td>
         <td>${p.cuota ? p.cuota.toFixed(2) : "—"}</td>
