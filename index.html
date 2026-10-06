@@ -481,7 +481,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 06/10/2026 11:41</span>
+    <span class="hero-generated" id="statGenerado">Generado 06/10/2026 13:06</span>
   </div>
   <div class="topbar-right">
     <div class="weekfilter">
@@ -642,8 +642,9 @@ prob_implicita = 1 / cuota</code></pre>
 </tbody></table></div>
 <p><b>Ejemplo:</b> Confianza 63% en equipo local a cuota 1.28. Sin FLB: no incluir (&lt; 65%). Con FLB: 63% + 3 = <b>66% efectivo</b> → incluir con cautela.</p>
 <hr>
-<h2>BTTS — Both Teams To Score (Ambos Equipos Marcan)</h2>
+<h2>BTTS — Both Teams To Score (Ambos Equipos Marcan) (NO Recomendado)</h2>
 <p><b>Qué es:</b> Mercado que pregunta si ambos equipos marcarán al menos un gol en el partido.</p>
+<p><b>Por qué aparece marcado como NO Recomendado:</b> en la auditoría completa del proyecto (572 partidos, n=520 predicciones de BTTS con resultado real), el acierto por bucket de confianza declarada sale prácticamente plano: <code>&lt;65%</code> acierta 51.5%, <code>65-69%</code> 55.5%, <code>70-74%</code> 57.4%, <code>75-79%</code> 52.9%, <code>80+%</code> 50.0% (n=4). A diferencia de 1X2 o 2.5 Goles — donde declarar más confianza sí se traduce en más acierto real — en BTTS el modelo acierta prácticamente lo mismo diga lo que diga. Eso es distinto (y peor) que &quot;un mercado difícil&quot;: un número de confianza que no discrimina es un número que aparenta precisión sin tenerla. Por eso se etiqueta como no recomendado en vez de solo bajarle el umbral.</p>
 <ul><li><b>BTTS=Sí</b>: ambos equipos marcan → resultado como 1-1, 2-1, 1-2, 2-2, etc.</li><li><b>BTTS=No</b>: al menos un equipo no marca → resultado como 1-0, 0-2, 0-0, 3-0, etc.</li></ul>
 <p><b>Matriz de decisión</b> (por equipo, usando estadísticas en su rol):</p>
 <div style="overflow-x:auto"><table class="glos-table"><thead><tr>
@@ -1365,6 +1366,15 @@ function renderResumen() {
 // ---------------------------------------------------------------------
 const MERCADOS_CALIB = ["1X2", "Doble Chance", "BTTS", "1.5 Goles", "2.5 Goles",
   "Corners", "Tarjetas", "Remates Porteria", "Handicap Asiatico"];
+
+// BTTS es el unico mercado donde la calibracion por bucket de IC sale PLANA
+// (~50-57% sin importar si el modelo declara <65% u 80%+, ver auditoria
+// 2026-10-06) -- a diferencia de 1X2/2.5 Goles, que si suben con el IC
+// declarado. Etiqueta solo de presentacion: la clave interna sigue siendo
+// "BTTS" en todos lados (filtros, agregados, datos) -- nunca cambiar esa.
+function marketDisplayName(m) {
+  return m === "BTTS" ? m + " (NO Recomendado)" : m;
+}
 const BUCKETS_CALIB = ["todos", "<65", "65-69", "70-74", "75-79", "80+"];
 
 let calibMercadoSel = "todos";
@@ -1427,7 +1437,7 @@ function renderCalibracion() {
         <label>Mercado</label>
         <select id="calibMercado">
           <option value="todos">Todos los mercados</option>
-          ${MERCADOS_CALIB.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("")}
+          ${MERCADOS_CALIB.map(m => `<option value="${esc(m)}">${esc(marketDisplayName(m))}</option>`).join("")}
         </select>
       </div>
       <div class="calib-filter-group">
@@ -1594,7 +1604,7 @@ function cardBody(r) {
       const netCls = p.neto === null ? "" : (p.neto > 0 ? "num-good" : "num-bad");
       const netTxt = p.neto === null ? "—" : (p.neto >= 0 ? "+" + p.neto + "%" : p.neto + "%");
       out += `<tr class="${p.include?'included':''}">
-        <td>${esc(p.mercado)}</td>
+        <td>${esc(marketDisplayName(p.mercado))}</td>
         <td>${esc(p.prediccion)}</td>
         <td><span class="conf-pill ${confClass(p.confianza)}">${p.confianza}%</span></td>
         <td>${p.cuota ? p.cuota.toFixed(2) : "—"}</td>
