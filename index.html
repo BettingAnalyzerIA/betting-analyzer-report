@@ -329,6 +329,8 @@ table.predtable tr.valor-emergente td:first-child { box-shadow: inset 3px 0 0 va
 .conf-lo { background: #262b3a; color: var(--text-faint); }
 .mkt-si { color: var(--green); font-weight: 600; }
 .mkt-no { color: var(--red); font-weight: 600; }
+.mkt-si-bruto { color: var(--green-dim); font-weight: 600; font-style: italic; }
+.mkt-no-bruto { color: #a85b5b; font-weight: 600; font-style: italic; }
 table.predtable td.num-good { color: var(--green); font-weight: 600; background: var(--green-bg); }
 table.predtable td.num-warn { color: var(--yellow); font-weight: 600; background: var(--yellow-bg); }
 table.predtable td.num-bad { color: var(--red); font-weight: 600; background: var(--red-bg); }
@@ -589,7 +591,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 09/10/2026 10:44</span>
+    <span class="hero-generated" id="statGenerado">Generado 09/10/2026 10:56</span>
   </div>
   <div class="topbar-right">
     <button type="button" class="auth-trigger-btn" id="authTriggerBtn">🔑 Iniciar sesión / Prueba gratis</button>
@@ -1456,7 +1458,7 @@ function renderLigasSeleccionadas() {
     main.innerHTML = `<div class="empty-state">Elegí una o más ligas en el cuadro "🏆 Filtrar pronósticos por ligas" de arriba para ver sus pronósticos y resultados.</div>`;
     return;
   }
-  const all = RECORDS.filter(r => selectedLigas.has(r.torneo));
+  const all = filteredRecordsByWeek().filter(r => selectedLigas.has(r.torneo));
   const multi = selectedLigas.size > 1;
   // La division es por si el partido YA se jugo (resultado_real lleno), no por estado —
   // un partido no_apostar que ya se jugo sigue siendo un Resultado, no un Pronostico.
@@ -1778,7 +1780,10 @@ function marketDisplayName(m, included) {
 const BUCKETS_CALIB = ["todos", "<65", "65-69", "70-74", "75-79", "80+"];
 
 let calibMercadoSel = "todos";
-let calibBucketSel = "todos";
+// Set vacio = "Todos" (sin restriccion). Con 1+ elementos, un bucket
+// cuenta si esta en el set -- permite combinar rangos (ej. 75-79 + 80+)
+// en vez de forzar una sola eleccion exclusiva.
+let calibBucketSel = new Set();
 let calibAmbitoSel = "sinapuesta";
 
 // Umbral pedido por el usuario 2026-09-24 tras detectar un caso real (Rosario
@@ -1797,13 +1802,14 @@ const CALIB_EDGE_MIN = -1;
 function calibFiltered() {
   const matchesMap = new Map();
   let si = 0, no = 0;
-  RECORDS.forEach(r => {
+  filteredRecordsByWeek().forEach(r => {
     if (calibAmbitoSel === "sinapuesta" && r.estado !== "SIN APUESTA") return;
+    if (calibAmbitoSel === "apostadas" && !(r.estado === "ACIERTO" || r.estado === "FALLO")) return;
     (r.predicciones || []).forEach(p => {
       if (calibMercadoSel !== "todos" && p.mercado !== calibMercadoSel) return;
       if (p.cuota == null || p.edge == null || p.edge < CALIB_EDGE_MIN) return;
       if (p.resultado_mkt_bruto !== "SI" && p.resultado_mkt_bruto !== "NO") return;
-      if (calibBucketSel !== "todos" && bucketDe(p.confianza) !== calibBucketSel) return;
+      if (calibBucketSel.size > 0 && !calibBucketSel.has(bucketDe(p.confianza))) return;
       if (p.resultado_mkt_bruto === "SI") si += 1; else no += 1;
       matchesMap.set(recId(r), r);
     });
@@ -1841,16 +1847,17 @@ function renderCalibracion() {
         </select>
       </div>
       <div class="calib-filter-group">
-        <label>Confianza declarada (IC)</label>
+        <label>Confianza declarada (IC) <span class="count">(podés combinar varios rangos)</span></label>
         <div class="filterchip-row" id="calibBucketRow">
-          ${BUCKETS_CALIB.map(b => `<button class="filterchip ${b===calibBucketSel?'active':''}" data-val="${b}">${b==="todos"?"Todos":b+"%"}</button>`).join("")}
+          ${BUCKETS_CALIB.map(b => `<button class="filterchip ${(b==='todos'?calibBucketSel.size===0:calibBucketSel.has(b))?'active':''}" data-val="${b}">${b==="todos"?"Todos":b+"%"}</button>`).join("")}
         </div>
       </div>
       <div class="calib-filter-group">
         <label>Ámbito</label>
         <div class="filterchip-row" id="calibAmbitoRow">
           <button class="filterchip ${calibAmbitoSel==='sinapuesta'?'active':''}" data-val="sinapuesta">Solo SIN APUESTA (sin ventaja real detectada)</button>
-          <button class="filterchip ${calibAmbitoSel==='todas'?'active':''}" data-val="todas">Todas las predicciones evaluadas</button>
+          <button class="filterchip ${calibAmbitoSel==='apostadas'?'active':''}" data-val="apostadas">Solo apostadas (con valor real)</button>
+          <button class="filterchip ${calibAmbitoSel==='todas'?'active':''}" data-val="todas">Todas (apostadas + sin apuesta)</button>
         </div>
       </div>
     </div>
@@ -1865,8 +1872,18 @@ function renderCalibracion() {
   });
   document.getElementById("calibBucketRow").querySelectorAll(".filterchip").forEach(btn => {
     btn.addEventListener("click", () => {
-      calibBucketSel = btn.dataset.val;
-      document.getElementById("calibBucketRow").querySelectorAll(".filterchip").forEach(b => b.classList.toggle("active", b === btn));
+      const val = btn.dataset.val;
+      if (val === "todos") {
+        calibBucketSel.clear();
+      } else if (calibBucketSel.has(val)) {
+        calibBucketSel.delete(val);
+      } else {
+        calibBucketSel.add(val);
+      }
+      document.getElementById("calibBucketRow").querySelectorAll(".filterchip").forEach(b => {
+        const bv = b.dataset.val;
+        b.classList.toggle("active", bv === "todos" ? calibBucketSel.size === 0 : calibBucketSel.has(bv));
+      });
       renderCalibResultado();
     });
   });
@@ -2000,6 +2017,13 @@ function cardBody(r) {
     out += `</ul>`;
   }
 
+  // Mismo resultado real/evaluacion que se repite al fondo de la card --
+  // duplicado aqui (justo despues de Condiciones) para no tener que bajar
+  // hasta el final solo para saber si el partido ya se jugo y que paso.
+  if (r.resultado_real) {
+    out += `<div class="result-box ${r.estado}" style="margin-top:10px"><b>Resultado real:</b> ${esc(r.resultado_real)}<br><b>Evaluación:</b> ${esc(r.eval_combinada)}</div>`;
+  }
+
   if (!r.premium && r.picks_bloqueados) {
     out += `<div class="premium-lock" style="margin-top:12px">
       <div class="premium-lock-icon">🔒</div>
@@ -2015,8 +2039,15 @@ function cardBody(r) {
       <th>Prob.</th><th>Incluir?</th><th>Edge</th><th>Neto</th><th>Resultado</th>
     </tr></thead><tbody>`;
     r.predicciones.forEach(p => {
+      // Si la prediccion fue una apuesta real (resultado_mkt), mostrar eso.
+      // Si no (SIN APUESTA o descartada), caer a resultado_mkt_bruto -- el
+      // mercado SI se puede calificar contra el marcador real aunque nunca
+      // se haya apostado -- marcado visualmente distinto ("bruto") para no
+      // confundirlo con el resultado de una apuesta real ya colocada.
       const resCell = p.resultado_mkt === "SI" ? `<span class="mkt-si">✓ Sí</span>` :
-                      (p.resultado_mkt === "NO" ? `<span class="mkt-no">✗ No</span>` : "—");
+                      p.resultado_mkt === "NO" ? `<span class="mkt-no">✗ No</span>` :
+                      p.resultado_mkt_bruto === "SI" ? `<span class="mkt-si-bruto" title="Resultado bruto: el mercado habria acertado, pero esta prediccion no fue una apuesta real">✓ Sí (bruto)</span>` :
+                      p.resultado_mkt_bruto === "NO" ? `<span class="mkt-no-bruto" title="Resultado bruto: el mercado no habria acertado; esta prediccion no fue una apuesta real">✗ No (bruto)</span>` : "—";
       const edgeCls = p.edge === null ? "" : (p.edge > 0 ? "num-good" : "num-bad");
       const edgeTxt = p.edge === null ? "—" : (p.edge >= 0 ? "+" + p.edge + "%" : p.edge + "%");
       const netCls = p.neto === null ? "" : (p.neto > 0 ? "num-good" : "num-bad");
@@ -2264,6 +2295,8 @@ weekselect.addEventListener("change", () => {
   renderHeroAndStats(filtered);
   refreshLigaDropdownCounts();
   if (currentTab === "resumen") renderResumen();
+  if (currentTab === "ligas") renderLigasSeleccionadas();
+  if (currentTab === "calibracion") renderCalibResultado();
 });
 
 updateAuthButton();
