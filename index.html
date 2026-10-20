@@ -594,7 +594,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 07:58</span>
+    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 12:12</span>
   </div>
   <div class="topbar-right">
     <button type="button" class="auth-trigger-btn" id="authTriggerBtn">🔑 Iniciar sesión / Prueba gratis</button>
@@ -811,9 +811,10 @@ prob_implicita = 1 / cuota</code></pre>
 <h2>Over / Under (Más de / Menos de)</h2>
 <p><b>Qué es:</b> Mercado sobre si una estadística del partido superará (Over) o no alcanzará (Under) un umbral determinado.</p>
 <p><b>Mercados disponibles en el modelo:</b></p>
-<ul><li>Goles: Over/Under 1.5 — Over/Under 2.5</li><li>Corners: Over/Under 8.5 — Over/Under 9.5 — Over/Under 10.5</li><li>Tarjetas: Over/Under 3.5 — Over/Under 4.5 — Over/Under 5.5</li><li>Remates a portería: Over/Under 4.5 — Over/Under 5.5 — Over/Under 6.5</li></ul>
+<ul><li>Goles: Over/Under 1.5 — Over/Under 2.5 — Under 3.5 <i>(solo este lado, ver nota abajo)</i></li><li>Corners: Over/Under 8.5 — Over/Under 9.5 — Over/Under 10.5</li><li>Tarjetas: Over/Under 3.5 — Over/Under 4.5 — Over/Under 5.5</li><li>Remates a portería: Over/Under 4.5 — Over/Under 5.5 — Over/Under 6.5</li></ul>
 <p><b>Redundancias críticas:</b></p>
-<ul><li>Over 2.5 + Over 1.5 → redundantes (si entran ≥3 goles, siempre entran ≥2) → incluir solo Over 2.5 en combinada</li><li>Under 1.5 + Under 2.5 → redundantes → incluir solo Under 1.5 en combinada</li></ul>
+<ul><li>Over 2.5 + Over 1.5 → redundantes (si entran ≥3 goles, siempre entran ≥2) → incluir solo Over 2.5 en combinada</li><li>Under 1.5 + Under 2.5 → redundantes → incluir solo Under 1.5 en combinada</li><li><b>Under 3.5 + Under 2.5 → redundantes</b> (si hay ≤2 goles, siempre hay ≤3) → incluir solo uno en combinada, nunca ambos</li></ul>
+<p><b>3.5 Goles — por qué es una línea ancha, no un mercado nuevo de peso igual (agregado 19/10/2026):</b> solo se evalúa el lado <b>Under 3.5</b> — es la contraparte de línea ancha de Over 1.5/Over 2.5, pensada para partidos donde Under 2.5 no llegó al umbral de inclusión pero sigue habiendo una lectura razonable de &quot;pocos goles&quot;. Como la línea es más ancha, un IC alto es menos informativo (es más fácil acertar &quot;menos de 4&quot; que &quot;menos de 3&quot;), así que el umbral de inclusión es <b>80%</b>, más exigente que el 67% de Under 2.5. <b>Nunca se incluye junto con Under 2.5 en la misma combinada</b> (ver redundancia arriba) — se usa como alternativa cuando Under 2.5 se queda corto de confianza pero Under 3.5 sí demuestra valor real propio frente a su cuota.</p>
 <hr>
 <h2>DC — Doble Chance (Double Chance)</h2>
 <p><b>Qué es:</b> Cubre dos de los tres resultados posibles (1X2) en una sola apuesta. Reduce cuota pero aumenta probabilidad.</p>
@@ -927,13 +928,11 @@ prob_implicita = 1 / cuota</code></pre>
 <tr><td>1.5 Goles</td><td>Sí, con claridad — de 55.7% a 83.7% (n=86–131)</td><td>—</td></tr>
 <tr><td>2.5 Goles</td><td>Parcial — sube bien hasta un punto, pero el rango 70–79% de confianza acierta apenas 50–53% (coincidencia con la cuota, no ventaja); solo el extremo 80+% (n=22) recupera calibración fuerte (86.4%)</td><td>— (confiar más en el extremo alto que en el rango medio)</td></tr>
 <tr><td><b>BTTS</b></td><td><b>No — plano entre 50.0% y 57.4% sin importar si el IC declarado es &lt;65% o 80+%</b></td><td><b>(NO Recomendado)</b></td></tr>
-<tr><td>Corners</td><td><b>Sin dato real verificable — el proyecto no guarda un marcador/estadística real para confirmar si acertó o no</b></td><td><b>(Sin Verificar)</b></td></tr>
-<tr><td>Tarjetas</td><td><b>Sin dato real verificable</b>, mismo motivo que Corners</td><td><b>(Sin Verificar)</b></td></tr>
-<tr><td>Remates Portería</td><td><b>Sin dato real verificable</b>, mismo motivo que Corners</td><td><b>(Sin Verificar)</b></td></tr>
+<tr><td>Corners / Tarjetas / Remates Portería</td><td><b>Primera lectura real disponible, muestra todavía chica (n=132, auditoría 19/10/2026) — y con un patrón que pide cautela, no confirmación:</b> el bucket 70–74% calibra peor que el bucket &lt;65%, el patrón opuesto al esperado</td><td><b>(Sin Verificar)</b> <i>(se mantiene hasta tener ~400 casos)</i></td></tr>
 <tr><td>Handicap Asiático</td><td>Muestra demasiado chica y no monótona para concluir (máximo n=47 por bucket, orden no consistente)</td><td><b>(Muestra Insuficiente)</b></td></tr>
 </tbody></table></div>
-<p><b>Por qué &quot;Sin Verificar&quot; es distinto de &quot;NO Recomendado&quot;:</b> BTTS SÍ tiene 520 predicciones con resultado real confirmado, y ese resultado muestra que el IC no discrimina — es un hallazgo negativo comprobado. Corners/Tarjetas/Remates Portería no tienen ningún resultado real contra el cual comparar (el proyecto no registra el marcador exacto de corners/tarjetas/remates de un partido ya jugado) — no es que fallen, es que <b>nadie puede saberlo todavía</b>, ni a favor ni en contra. Tratar ambos casos igual sería menos honesto que distinguirlos.</p>
-<p><b>Qué hacer con esto como apostador:</b> los IC de Corners/Tarjetas/Remates Portería y Handicap Asiático pueden seguir siendo útiles como referencia (se calculan con una fórmula real, no al azar — ver tabla de fórmulas IC arriba), pero no tienen el mismo respaldo de evidencia que 1X2, Doble Chance o 1.5 Goles. BTTS, en cambio, no debería pesar en una decisión de apuesta bajo ninguna circunstancia actual del modelo.</p>
+<p><b>Por qué &quot;Sin Verificar&quot; es distinto de &quot;NO Recomendado&quot;:</b> BTTS SÍ tiene 520 predicciones con resultado real confirmado, y ese resultado muestra que el IC no discrimina — es un hallazgo negativo comprobado. Corners/Tarjetas/Remates Portería, en cambio, recién empezaron a tener un resultado real contra el cual comparar — desde el 14/10/2026 el proyecto guarda el conteo exacto de corners/tarjetas/remates de cada partido ya jugado (tabla <code>resultados_ctr</code>), algo que antes no existía (n=0). La primera lectura con esa muestra (n=132) no confirma que el IC calibre bien ni que falle de forma plana como BTTS — muestra, de hecho, una señal rara (el bucket intermedio 70–74% rinde peor que el más bajo) que hoy se lee como ruido de muestra chica, no como un hallazgo negativo firme. Se mantiene la etiqueta &quot;Sin Verificar&quot; hasta que la muestra crezca lo suficiente (meta interna: ~400 casos) para distinguir señal de ruido.</p>
+<p><b>Qué hacer con esto como apostador:</b> los IC de Corners/Tarjetas/Remates Portería y Handicap Asiático pueden seguir siendo útiles como referencia (se calculan con una fórmula real, no al azar — ver tabla de fórmulas IC arriba, e incluyen la desviación estándar del promedio para que se vea qué tan consistente es la muestra), pero no tienen el mismo respaldo de evidencia que 1X2, Doble Chance o 1.5 Goles. BTTS, en cambio, no debería pesar en una decisión de apuesta bajo ninguna circunstancia actual del modelo.</p>
 <hr>
 <h2>Condición Dinámica</h2>
 <p><b>Qué es:</b> Factor situacional (no estadístico) que altera el comportamiento esperado de un equipo en ese partido específico. Se evalúan antes de generar predicciones.</p>
@@ -944,7 +943,7 @@ prob_implicita = 1 / cuota</code></pre>
 <h2>Fuentes de Datos del Modelo</h2>
 <p><b>Qué es:</b> el conjunto de fuentes externas que el modelo consulta para armar cada pronóstico — cuotas reales, lesiones/bajas, enfrentamientos directos (H2H), forma reciente, estadísticas de córners/tarjetas/remates y valor de mercado de jugadores. Son datos estructurados consultados en vivo, no investigación manual ni opinión.</p>
 <p><b>Fuentes activas:</b></p>
-<ul><li><b>API-Football</b> — cuotas (Bet365), bajas/lesiones, enfrentamientos directos, estadísticas de partidos ya jugados. Fuente primaria del proyecto desde agosto de 2026.</li><li><b>Highlightly</b> y <b>SofaScore</b> (vía Apify) — forma reciente, promedios de córners/tarjetas/remates a portería, especialmente en ligas donde API-Football no cubre estadísticas de temporada (Liga BetPlay Colombia, Copa Libertadores/Sudamericana, Liga Profesional Argentina, Brasileirao).</li><li><b>Transfermarkt</b> (vía Apify) — valor de mercado y tendencia de jugadores, para ponderar qué tan grave es una baja confirmada.</li><li><b>FotMob</b> (vía Apify) — rendimiento individual reciente de un jugador.</li></ul>
+<ul><li><b>API-Football</b> — fuente principal para prácticamente todo: cuotas (Bet365), bajas/lesiones, enfrentamientos directos, forma reciente, estadísticas de partidos ya jugados, y promedios de córners/tarjetas/remates a portería para cualquier liga, incluidas las que antes dependían de otra fuente (Liga BetPlay Colombia, Copa Libertadores/Sudamericana, Liga Profesional Argentina, Brasileirao).</li><li><b>Transfermarkt</b> — valor de mercado y tendencia de jugadores, para ponderar qué tan grave es una baja confirmada. Es la única excepción estructural: ningún otro proveedor expone ese dato, así que se mantiene como fuente dedicada (consultada y guardada periódicamente, no en cada partido).</li><li><b>Highlightly</b> y <b>SofaScore</b> — hoy quedan como respaldo puntual, no como fuente principal: solo entran si la fuente principal no trae el dato para un partido específico.</li></ul>
 <p><b>Por qué no aparece el nombre de la fuente en cada pronóstico:</b> el método de consulta y combinación de estas fuentes es el trabajo propio del proyecto — mostrarlo partido por partido no le añade valor al lector y facilita que cualquiera copie el proceso sin el filtro de análisis que hay detrás. Lo que importa para evaluar un pronóstico es el dato (la cuota, el marcador, la racha), no el proveedor del que salió.</p>
 <hr>
 <h2>Top-5 Ausentes</h2>
@@ -961,7 +960,7 @@ prob_implicita = 1 / cuota</code></pre>
 <ul><li>Probabilidad implícita de la cuota: 100 / 1.85 = 54.1%</li><li>Umbral con margen: 54.1% + 5% = 59.1%</li><li>70% &gt; 59.1% → <b>tiene valor</b> → EV = (1.85 × 0.70) − 1 = +29.5%</li></ul>
 <p><b>Regla:</b> Una apuesta puede estar por encima del umbral de confianza (65%) y aun así tener EV negativo si la cuota es muy baja. Verificar siempre ambos.</p>
 <hr>
-<p class="glos-note"><i>Última actualización: 22/09/2026 — Agregar nuevos términos a medida que surjan en los análisis.</i></p></div>
+<p class="glos-note"><i>Última actualización: 20/10/2026 — Agregar nuevos términos a medida que surjan en los análisis.</i></p></div>
 </main>
 
 <footer>
