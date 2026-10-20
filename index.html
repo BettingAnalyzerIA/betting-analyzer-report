@@ -594,7 +594,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 07:53</span>
+    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 07:58</span>
   </div>
   <div class="topbar-right">
     <button type="button" class="auth-trigger-btn" id="authTriggerBtn">🔑 Iniciar sesión / Prueba gratis</button>
@@ -1319,27 +1319,47 @@ function updateLigasCount() {
   if (btn) btn.classList.toggle("has-selection", selectedLigas.size > 0);
 }
 
-// Posiciona un panel desplegable (liga/categoria) sin que quede cortado por
-// el borde de la pantalla -- en movil se centra como un panel fijo en vez de
-// anclarse al boton, porque anclado al boton frecuentemente quedaba con la
-// mayor parte fuera del viewport (el scroll de la pagina no mueve un
-// position:fixed, asi que esa parte invisible era irrecuperable).
+// Posiciona un panel desplegable (liga/categoria/torneo) siempre centrado en
+// la pantalla -- version anterior lo anclaba cerca del boton, lo que en
+// desktop lo dejaba pegado arriba y cortado si el boton estaba a mitad de
+// scroll de una pagina larga (reportado por el usuario: "no tiene scroll y
+// no juega con la pagina"). Ahora se centra con transform, igual en movil
+// y desktop, y el scroll de la lista queda SIEMPRE dentro del panel porque
+// lockBodyScroll() congela el fondo mientras el panel esta abierto.
 function positionDropdown(dd, btn) {
   const isMobile = window.innerWidth <= 640;
+  dd.style.left = "50%";
+  dd.style.top = "50%";
+  dd.style.transform = "translate(-50%, -50%)";
   if (isMobile) {
     dd.style.width = "94vw";
     dd.style.maxWidth = "94vw";
     dd.style.maxHeight = "80vh";
-    dd.style.left = "3vw";
-    dd.style.top = "8vh";
   } else {
-    const r = btn.getBoundingClientRect();
-    dd.style.width = "";
+    dd.style.width = "360px";
     dd.style.maxWidth = "90vw";
-    dd.style.maxHeight = "65vh";
-    dd.style.left = Math.min(r.left, window.innerWidth - 360) + "px";
-    dd.style.top = Math.min(r.bottom + 6, window.innerHeight - 250) + "px";
+    dd.style.maxHeight = "70vh";
   }
+}
+
+// Bloquea el scroll del fondo (body) mientras un panel esta abierto, y lo
+// restaura exactamente en la misma posicion al cerrarlo -- sin esto, el
+// scroll del dedo/mouse se iba a la pagina de atras en vez de a la lista
+// del panel, dando la sensacion de que el panel "no tiene scroll".
+let _scrollLockY = 0;
+function lockBodyScroll() {
+  _scrollLockY = window.scrollY;
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${_scrollLockY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+}
+function unlockBodyScroll() {
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.left = "";
+  document.body.style.right = "";
+  window.scrollTo(0, _scrollLockY);
 }
 
 function toggleLigaDropdown(forceOpen) {
@@ -1349,8 +1369,10 @@ function toggleLigaDropdown(forceOpen) {
   if (willShow) {
     positionDropdown(dd, btn);
     dd.classList.remove("hidden");
+    lockBodyScroll();
   } else {
     dd.classList.add("hidden");
+    unlockBodyScroll();
   }
 }
 
@@ -1367,6 +1389,11 @@ function selectTab(tab) {
   const mainEl = document.getElementById("main");
   const glosEl = document.getElementById("glosario-view");
   if (tab !== "ligas") toggleLigaDropdown(false);
+  // catDropdown/torneoDropdown viven dentro del DOM de "pendientes" (se
+  // destruyen al re-renderizar esa pestana) -- si quedaban abiertos al
+  // cambiar de pestana, el body se quedaba bloqueado para siempre porque
+  // nunca se llamaba a unlockBodyScroll(). Desbloquear siempre al navegar.
+  unlockBodyScroll();
   if (tab === "glosario") {
     mainEl.classList.add("hidden");
     glosEl.classList.remove("hidden");
@@ -1548,8 +1575,10 @@ function toggleCatDropdown(forceOpen) {
   if (willShow) {
     positionDropdown(dd, btn);
     dd.classList.remove("hidden");
+    lockBodyScroll();
   } else {
     dd.classList.add("hidden");
+    unlockBodyScroll();
   }
 }
 document.addEventListener("click", (e) => {
@@ -1638,12 +1667,16 @@ function renderPendientesDia() {
     const dd = document.getElementById("catDropdown");
     const counts = {};
     pendientes.forEach(r => { const c = r.categoria || "Otras ligas"; counts[c] = (counts[c]||0) + 1; });
+    // Solo categorias con al menos 1 partido pendiente -- antes se listaban
+    // las 7 fijas de CATEGORIA_ORDEN aunque tuvieran 0, lo que mostraba
+    // opciones muertas sin ningun pronostico detras (reportado por el usuario).
+    const categoriasConPartidos = CATEGORIA_ORDEN.filter(c => counts[c] > 0);
     let h = `<div class="ld-actions">
       <button id="catSelectAll">Seleccionar todas</button>
       <button id="catClearAll">Limpiar</button>
       <button id="catClose" class="ld-close">✕ Cerrar</button>
     </div>`;
-    CATEGORIA_ORDEN.forEach(c => {
+    categoriasConPartidos.forEach(c => {
       const checked = selectedCategorias.has(c) ? "checked" : "";
       h += `<label class="liga-item ${checked ? 'checked' : ''}" data-cat="${esc(c)}">
         <input type="checkbox" ${checked}> ${esc(c)} <span class="n">${counts[c]||0}</span>
@@ -1662,7 +1695,7 @@ function renderPendientesDia() {
       });
     });
     document.getElementById("catSelectAll").addEventListener("click", () => {
-      CATEGORIA_ORDEN.forEach(c => selectedCategorias.add(c));
+      categoriasConPartidos.forEach(c => selectedCategorias.add(c));
       renderCatDropdown(); updateCatCount(); applyAll(); renderCatChips();
     });
     document.getElementById("catClearAll").addEventListener("click", () => {
@@ -1792,8 +1825,10 @@ function toggleTorneoDropdownDia(forceOpen) {
   if (willShow) {
     positionDropdown(dd, btn);
     dd.classList.remove("hidden");
+    lockBodyScroll();
   } else {
     dd.classList.add("hidden");
+    unlockBodyScroll();
   }
 }
 document.addEventListener("click", (e) => {
