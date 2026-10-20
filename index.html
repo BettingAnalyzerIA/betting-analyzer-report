@@ -595,7 +595,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 13:56</span>
+    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 14:04</span>
   </div>
   <div class="topbar-right">
     <button type="button" class="auth-trigger-btn" id="authTriggerBtn">🔑 Iniciar sesión / Prueba gratis</button>
@@ -1960,6 +1960,19 @@ function calibFiltered() {
     // el chequeo real pasa abajo por prediccion, no por estado del partido.
     (r.predicciones || []).forEach(p => {
       if (calibAmbitoSel === "emergente" && !p.valor_emergente) return;
+      // Bug real encontrado 2026-10-20 (reportado por el usuario: Deportivo
+      // La Coruna/Minnesota-St.Louis seguian apareciendo como "Fallo" en
+      // "Solo apostadas" pese a que su UNICA prediccion include=True ya
+      // quedaba excluida por apuesta_valida=False mas abajo): el ambito
+      // "apostadas" solo filtraba por r.estado (ACIERTO/FALLO, el estado del
+      // PARTIDO completo) pero dejaba que CUALQUIER prediccion del mismo
+      // partido -- incluida una con include=False que nunca fue la apuesta
+      // real, solo tenia cuota/edge calculados -- entrara al conteo. Eso
+      // colaba el partido en la lista con su badge FALLO/ACIERTO generico
+      // aunque la unica prediccion realmente apostada ya estuviera excluida.
+      // Fix: en ambito "apostadas", solo cuenta la prediccion que de verdad
+      // fue include=True.
+      if (calibAmbitoSel === "apostadas" && !p.include) return;
       // Una prediccion que SI se aposto (include=True) solo cuenta como
       // evidencia de calibracion si ya paso el gate real del proyecto --
       // mercado con dato verificable Y dentro del piso de IC de su mercado/
