@@ -594,7 +594,7 @@ table.glos-table tr:nth-child(even) td { background: var(--bg-panel); }
     <span class="st-label">Filosofía de valor:</span>
     <span class="st-phrase">No buscamos más pronósticos. Buscamos mejores decisiones respaldadas por evidencia.</span>
     <span class="st-sub">No es suficiente con que algo sea probable — tiene que ser más probable de lo que la cuota implica.</span>
-    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 12:12</span>
+    <span class="hero-generated" id="statGenerado">Generado 20/10/2026 12:24</span>
   </div>
   <div class="topbar-right">
     <button type="button" class="auth-trigger-btn" id="authTriggerBtn">🔑 Iniciar sesión / Prueba gratis</button>
@@ -1927,6 +1927,12 @@ let calibMercadoSel = "todos";
 // en vez de forzar una sola eleccion exclusiva.
 let calibBucketSel = new Set();
 let calibAmbitoSel = "sinapuesta";
+// Set vacio = todos los torneos (sin restriccion) -- mismo patron que
+// selectedCategorias/selectedTorneosDia en "Pronosticos del Dia", pero con
+// nombre propio: esta pestana tiene su propio dropdown independiente del
+// filtro global de "Filtrar pronosticos por ligas" (selectedLigas), porque
+// mezclar ambos acoplaria 2 pestanas sin relacion con lo que el usuario pidio.
+let calibTorneoSel = new Set();
 
 // Umbral pedido por el usuario 2026-09-24 tras detectar un caso real (Rosario
 // Central vs Universidad Central, Copa Lib): ese partido declaraba IC en 8
@@ -1945,9 +1951,14 @@ function calibFiltered() {
   const matchesMap = new Map();
   let si = 0, no = 0;
   filteredRecordsByWeek().forEach(r => {
+    if (calibTorneoSel.size > 0 && !calibTorneoSel.has(r.torneo)) return;
     if (calibAmbitoSel === "sinapuesta" && r.estado !== "SIN APUESTA") return;
     if (calibAmbitoSel === "apostadas" && !(r.estado === "ACIERTO" || r.estado === "FALLO")) return;
+    // "emergente" no filtra por r.estado -- un mercado con valor_emergente=true
+    // solo existe en partidos SIN APUESTA (ver build_records() en Python), pero
+    // el chequeo real pasa abajo por prediccion, no por estado del partido.
     (r.predicciones || []).forEach(p => {
+      if (calibAmbitoSel === "emergente" && !p.valor_emergente) return;
       if (calibMercadoSel !== "todos" && p.mercado !== calibMercadoSel) return;
       if (p.cuota == null || p.edge == null || p.edge < CALIB_EDGE_MIN) return;
       if (p.resultado_mkt_bruto !== "SI" && p.resultado_mkt_bruto !== "NO") return;
@@ -1999,7 +2010,15 @@ function renderCalibracion() {
         <div class="filterchip-row" id="calibAmbitoRow">
           <button class="filterchip ${calibAmbitoSel==='sinapuesta'?'active':''}" data-val="sinapuesta">Solo SIN APUESTA (sin ventaja real detectada)</button>
           <button class="filterchip ${calibAmbitoSel==='apostadas'?'active':''}" data-val="apostadas">Solo apostadas (con valor real)</button>
+          <button class="filterchip ${calibAmbitoSel==='emergente'?'active':''}" data-val="emergente">⚡ Solo valor emergente</button>
           <button class="filterchip ${calibAmbitoSel==='todas'?'active':''}" data-val="todas">Todas (apostadas + sin apuesta)</button>
+        </div>
+      </div>
+      <div class="calib-filter-group">
+        <label>Liga / Torneo <span class="count">(podés combinar varias)</span></label>
+        <div class="cat-filter-wrap" style="position:relative;display:inline-block">
+          <button class="filterchip" id="calibTorneoBtn">🏆 Liga / Torneo <span class="n" id="calibTorneoCount">todas</span></button>
+          <div class="liga-dropdown hidden" id="calibTorneoDropdown"></div>
         </div>
       </div>
     </div>
@@ -2036,8 +2055,85 @@ function renderCalibracion() {
       renderCalibResultado();
     });
   });
+  renderCalibTorneoDropdown();
+  document.getElementById("calibTorneoBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleCalibTorneoDropdown();
+  });
   renderCalibResultado();
 }
+
+// Dropdown multiseleccion de liga/torneo para "Explora la Calibracion del
+// Modelo" -- mismo patron visual que selectedTorneosDia (Pronosticos del
+// Dia), pero con su propio Set (calibTorneoSel) e independiente del filtro
+// global selectedLigas ("Filtrar pronosticos por ligas"): esta pestana
+// agrega por prediccion/mercado, no por partido, y mezclar ambos estados
+// habria acoplado 2 pestanas sin relacion entre si. El conteo por torneo se
+// calcula sobre filteredRecordsByWeek() para que refleje la semana activa.
+function renderCalibTorneoDropdown() {
+  const dd = document.getElementById("calibTorneoDropdown");
+  if (!dd) return;
+  const counts = {};
+  filteredRecordsByWeek().forEach(r => { counts[r.torneo] = (counts[r.torneo]||0) + 1; });
+  const torneosConPartidos = TORNEOS.filter(t => counts[t] > 0).sort((a, b) => counts[b] - counts[a]);
+  let h = `<div class="ld-actions">
+    <button id="calibTorneoSelectAll">Seleccionar todas</button>
+    <button id="calibTorneoClearAll">Limpiar</button>
+    <button id="calibTorneoClose" class="ld-close">✕ Cerrar</button>
+  </div>`;
+  torneosConPartidos.forEach(t => {
+    const checked = calibTorneoSel.has(t) ? "checked" : "";
+    h += `<label class="liga-item ${checked ? 'checked' : ''}" data-torneo="${esc(t)}">
+      <input type="checkbox" ${checked}> ${esc(t)} <span class="n">${counts[t]||0}</span>
+    </label>`;
+  });
+  dd.innerHTML = h;
+  dd.querySelectorAll(".liga-item").forEach(item => {
+    const cb = item.querySelector("input");
+    cb.addEventListener("change", () => {
+      const t = item.dataset.torneo;
+      if (cb.checked) calibTorneoSel.add(t); else calibTorneoSel.delete(t);
+      item.classList.toggle("checked", cb.checked);
+      updateCalibTorneoCount();
+      renderCalibResultado();
+    });
+  });
+  document.getElementById("calibTorneoSelectAll").addEventListener("click", () => {
+    torneosConPartidos.forEach(t => calibTorneoSel.add(t));
+    renderCalibTorneoDropdown(); updateCalibTorneoCount(); renderCalibResultado();
+  });
+  document.getElementById("calibTorneoClearAll").addEventListener("click", () => {
+    calibTorneoSel.clear();
+    renderCalibTorneoDropdown(); updateCalibTorneoCount(); renderCalibResultado();
+  });
+  document.getElementById("calibTorneoClose").addEventListener("click", () => toggleCalibTorneoDropdown(false));
+}
+function updateCalibTorneoCount() {
+  const el = document.getElementById("calibTorneoCount");
+  if (el) el.textContent = calibTorneoSel.size || "todas";
+  const btn = document.getElementById("calibTorneoBtn");
+  if (btn) btn.classList.toggle("has-selection", calibTorneoSel.size > 0);
+}
+function toggleCalibTorneoDropdown(forceOpen) {
+  const dd = document.getElementById("calibTorneoDropdown");
+  const btn = document.getElementById("calibTorneoBtn");
+  if (!dd || !btn) return;
+  const willShow = forceOpen !== undefined ? forceOpen : dd.classList.contains("hidden");
+  if (willShow) {
+    positionDropdown(dd, btn);
+    dd.classList.remove("hidden");
+    lockBodyScroll();
+  } else {
+    dd.classList.add("hidden");
+    unlockBodyScroll();
+  }
+}
+document.addEventListener("click", (e) => {
+  const dd = document.getElementById("calibTorneoDropdown");
+  if (dd && !dd.classList.contains("hidden") && !e.target.closest("#calibTorneoDropdown") && !e.target.closest("#calibTorneoBtn")) {
+    toggleCalibTorneoDropdown(false);
+  }
+});
 
 function renderCalibResultado() {
   const {n, pct, matches} = calibFiltered();
@@ -2468,7 +2564,7 @@ weekselect.addEventListener("change", () => {
   refreshLigaDropdownCounts();
   if (currentTab === "resumen") renderResumen();
   if (currentTab === "ligas") renderLigasSeleccionadas();
-  if (currentTab === "calibracion") renderCalibResultado();
+  if (currentTab === "calibracion") { renderCalibTorneoDropdown(); renderCalibResultado(); }
 });
 
 updateAuthButton();
